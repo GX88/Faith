@@ -1,0 +1,9 @@
+---
+alwaysApply: true
+---
+
+1. Answer in Chinese-simplified in any case
+2. Methods that involve the use of any dependencies or libraries need to be queried for their corresponding documents before being used
+3. In any case, don't get stuck in the problem when you can't fix it successfully after two or three attempts. You need to read the overall project to see if there are any other possible causes; Find the root cause
+4. When you're implementing something or fixing a problem, don't automatically scale something else. Unless requested by the user, minimal implementation and best practices are required
+5. Any code generated should be well commented and elegantly formatted
