@@ -66,8 +66,16 @@ class SkipController extends GetxController {
     // 执行跳转前回调
     beforeSkip?.call();
 
-    // 使用路由系统跳转到首页
-    RouteHelper.replace(RoutePath.home);
+    // 跳转到生物识别页面，允许返回但不显示返回按钮
+    RouteHelper.replace(
+      RoutePath.biometricAuth,
+      arguments: {
+        'canPop': true,
+        'showBackButton': false,
+        'title': '身份验证',
+        'description': '请完成指纹验证以继续使用',
+      },
+    );
 
     // 执行跳转后回调
     afterSkip?.call();

@@ -1,3 +1,4 @@
+import 'package:faith/comm/ui/fa_button/index.dart';
 import 'package:faith/router/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -35,27 +36,17 @@ class UnknownPage extends StatelessWidget {
                 btnText: "To主页",
                 press: () => RouteHelper.pushAndRemoveUntil(RoutePath.home),
               ),
-              _buildButton(onPressed: () => RouteHelper.pop(), text: "返回"),
+              FaButton(
+                onPressed: () => RouteHelper.pop(),
+                text: "返回",
+                block: true,
+                type: FaButtonType.danger,
+              ),
               const SizedBox(height: 16), // 底部安全间距
             ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildButton({required VoidCallback onPressed, required String text}) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        minimumSize: const Size(double.infinity, 48),
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(8)),
-        ),
-      ),
-      child: Text(text),
     );
   }
 }
@@ -99,27 +90,18 @@ class ErrorInfo extends StatelessWidget {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
-            const SizedBox(height: 40), // 使用固定值替代16 * 2.5
-            button ?? _buildButton(onPressed: press, text: btnText ?? "重试"),
+            const SizedBox(height: 40),
+            button ??
+                FaButton(
+                  onPressed: press,
+                  text: btnText ?? "重试",
+                  block: true,
+                  type: FaButtonType.primary,
+                ),
             const SizedBox(height: 16),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildButton({required VoidCallback onPressed, required String text}) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        minimumSize: const Size(double.infinity, 48),
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(8)),
-        ),
-      ),
-      child: Text(text),
     );
   }
 }

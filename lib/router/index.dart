@@ -1,3 +1,4 @@
+import 'package:faith/pages/auth/biometric_auth_page.dart';
 import 'package:faith/pages/home/index.dart';
 import 'package:faith/pages/splash/one_splash.dart';
 import 'package:faith/pages/unknown/index.dart';
@@ -9,6 +10,9 @@ abstract class RoutePath {
   // 启动页
   static const String splash = '/splash';
   static const String oneSplash = '/one_splash';
+
+  // 认证页面
+  static const String biometricAuth = '/auth/biometric';
 
   // 主页面
   static const String home = '/home';
@@ -59,10 +63,28 @@ class AppPages {
       transition: Transition.fadeIn,
       preventDuplicates: true,
     ),
+
+    // 生物识别认证页面
+    CustomGetPage(
+      name: RoutePath.biometricAuth,
+      page: () {
+        final arguments = Get.arguments as Map<String, dynamic>?;
+        return BiometricAuthPage(
+          canPop: arguments?['canPop'] ?? true,
+          showBackButton: arguments?['showBackButton'] ?? true, // 默认显示返回按钮
+          title: arguments?['title'] ?? '生物识别验证',
+          description: arguments?['description'],
+          nextRoute: arguments?['nextRoute'] ?? RoutePath.home,
+          onAuthSuccess: arguments?['onAuthSuccess'],
+        );
+      },
+      transition: Transition.fadeIn,
+      preventDuplicates: true,
+    ),
   ];
 
   /// 初始路由
-  static const initial = RoutePath.oneSplash;
+  static const initial = RoutePath.oneSplash; // 修改初始路由为启动页
 
   /// 未知路由
   static final unknownRoute = CustomGetPage(

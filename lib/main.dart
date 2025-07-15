@@ -104,6 +104,15 @@ class MainAppPage extends StatelessWidget {
           initialRoute: AppPages.initial,
           getPages: AppPages.pages,
           unknownRoute: AppPages.unknownRoute,
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF000000), // 使用黑色作为主色调
+              primary: const Color(0xFF000000),
+              secondary: const Color(0xFF666666),
+              error: const Color(0xFFDC3545),
+            ),
+            useMaterial3: true, // 使用 Material 3
+          ),
           builder: (context, child) {
             return Stack(
               children: [

@@ -14,13 +14,17 @@ class OneSplash extends StatelessWidget {
       init: SkipController(initialCountdown: 5, initialShowSkip: true),
       builder: (controller) => Scaffold(
         body: Stack(
+          clipBehavior: Clip.none,
           children: [
             // 背景图
             Positioned(
               width: MediaQuery.of(context).size.width * 1.7,
               left: 100,
               bottom: 100,
-              child: Image.asset("lib/assets/splash/Spline.png"),
+              child: Image.asset(
+                "lib/assets/splash/Spline.png",
+                alignment: Alignment.centerRight,
+              ),
             ),
             // 模糊效果
             Positioned.fill(
@@ -42,22 +46,49 @@ class OneSplash extends StatelessWidget {
                 child: Column(
                   children: [
                     const Spacer(),
-                    const SizedBox(
-                      width: 360,
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width,
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Text(
-                            "欢迎使用 Faith App",
+                          const Text(
+                            "Faith",
                             style: TextStyle(
-                              fontSize: 40,
-                              fontWeight: FontWeight.bold,
-                              height: 1.2,
+                              fontSize: 72,
+                              fontWeight: FontWeight.w700,
+                              height: 1.1,
+                              letterSpacing: -2,
                             ),
                           ),
-                          SizedBox(height: 16),
-                          Text(
-                            "Don't skip design. Learn design and code, by building real apps with Flutter and Swift. Complete courses about the best tools.",
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color.fromRGBO(0, 0, 0, 0.06),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Text(
+                              "有风的地方就是方向",
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 2,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 36),
+                          const Text(
+                            "生活中的每一个瞬间\n都值得被优雅地对待\n让科技融入生活\n让创意改变世界",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 15,
+                              height: 1.6,
+                              letterSpacing: 0.8,
+                              color: Color.fromRGBO(0, 0, 0, 0.45),
+                            ),
                           ),
                         ],
                       ),
@@ -69,21 +100,21 @@ class OneSplash extends StatelessWidget {
             ),
             // 跳过按钮
             Positioned(
-              top: 40,
-              right: 32,
+              top: 60,
+              right: 24,
               child: Obx(
                 () => controller.showSkip.value
-                    ? Container(
+                    ? GestureDetector(
+                        onTap: controller.skipToMain,
+                        child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 4,
+                            horizontal: 14,
+                            vertical: 6,
                         ),
                         decoration: BoxDecoration(
                           color: Colors.black.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: GestureDetector(
-                          onTap: controller.skipToMain,
                           child: Text(
                             '跳过 ${controller.countdown.value}s',
                             style: const TextStyle(
