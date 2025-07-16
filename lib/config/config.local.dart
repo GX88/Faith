@@ -9,4 +9,8 @@ class LocalConfig extends Config {
 
   @override
   int get cacheMaxAge => 0; // 开发环境禁用缓存
+
+  // 是否开启指纹认证
+  @override
+  bool get loginAuthentication => true;
 }

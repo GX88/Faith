@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:faith/config/config.default.dart';
 import 'package:faith/router/index.dart';
 import 'package:get/get.dart';
 
@@ -26,11 +27,19 @@ class SkipController extends GetxController {
   /// 是否显示跳过按钮
   final bool initialShowSkip;
 
+  /// 跳转目标路由
+  final String targetRoute;
+
+  /// 跳转参数
+  final Map<String, dynamic>? targetArguments;
+
   SkipController({
     this.initialCountdown = 5,
     this.beforeSkip,
     this.afterSkip,
     this.initialShowSkip = true,
+    this.targetRoute = RoutePath.home,
+    this.targetArguments,
   }) {
     countdown = initialCountdown.obs;
     showSkip = initialShowSkip.obs;
@@ -60,22 +69,29 @@ class SkipController extends GetxController {
   }
 
   /// 跳转到目标页面
-  void skipToMain() {
+  void skipToMain() async {
     _timer?.cancel();
 
     // 执行跳转前回调
     beforeSkip?.call();
 
-    // 跳转到生物识别页面，允许返回但不显示返回按钮
-    RouteHelper.replace(
-      RoutePath.biometricAuth,
-      arguments: {
-        'canPop': true,
-        'showBackButton': false,
-        'title': '身份验证',
-        'description': '请完成指纹验证以继续使用',
-      },
-    );
+    // 判断是否开启登录认证
+    if (Config.instance.loginAuthentication == true) {
+      // 跳转到生物识别页面
+      RouteHelper.replace(
+        RoutePath.biometricAuth,
+        arguments: {
+          'canPop': false,
+          'showBackButton': false,
+          'nextRoute': targetRoute,
+          'title': '登录验证',
+          'description': '请完成登录验证后才可以继续使用',
+        },
+      );
+    } else {
+      // 未开启认证，直接跳转
+      RouteHelper.replace(targetRoute, arguments: targetArguments);
+    }
 
     // 执行跳转后回调
     afterSkip?.call();

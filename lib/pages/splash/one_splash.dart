@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:faith/router/index.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -11,7 +12,11 @@ class OneSplash extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<SkipController>(
-      init: SkipController(initialCountdown: 5, initialShowSkip: true),
+      init: SkipController(
+        initialCountdown: 5,
+        initialShowSkip: true,
+        targetRoute: RoutePath.home,
+      ),
       builder: (controller) => Scaffold(
         body: Stack(
           clipBehavior: Clip.none,
@@ -107,14 +112,14 @@ class OneSplash extends StatelessWidget {
                     ? GestureDetector(
                         onTap: controller.skipToMain,
                         child: Container(
-                        padding: const EdgeInsets.symmetric(
+                          padding: const EdgeInsets.symmetric(
                             horizontal: 14,
                             vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
                           child: Text(
                             '跳过 ${controller.countdown.value}s',
                             style: const TextStyle(

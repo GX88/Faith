@@ -1,3 +1,6 @@
+import 'dart:async'; // Added for Timer
+
+import 'package:faith/comm/ui/fa_toast/index.dart';
 import 'package:faith/router/index.dart';
 import 'package:faith/utils/biometric_auth.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +30,7 @@ class BiometricAuthPage extends StatefulWidget {
 
 class _BiometricAuthPageState extends State<BiometricAuthPage> {
   bool _isUnlocked = false;
-  bool _hasAttemptedPop = false; // 添加状态标记是否尝试过返回
+  int _popAttemptCount = 0; // 记录返回尝试次数
 
   @override
   void initState() {
@@ -41,17 +44,9 @@ class _BiometricAuthPageState extends State<BiometricAuthPage> {
     );
   }
 
-  // 处理返回尝试
-  void _handlePopAttempt() {
-    if (!widget.canPop && !_hasAttemptedPop) {
-      setState(() => _hasAttemptedPop = true);
-      // 2秒后重置状态
-      Future.delayed(const Duration(seconds: 2), () {
-        if (mounted) {
-          setState(() => _hasAttemptedPop = false);
-        }
-      });
-    }
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   Future<void> _authenticate(BuildContext context) async {
@@ -96,17 +91,33 @@ class _BiometricAuthPageState extends State<BiometricAuthPage> {
       canPop: widget.canPop,
       onPopInvokedWithResult: (bool didPop, dynamic result) async {
         if (!didPop) {
-          setState(() => _hasAttemptedPop = true);
-          // 2秒后重置状态
-          Future.delayed(const Duration(seconds: 2), () {
-            if (mounted) {
-              setState(() => _hasAttemptedPop = false);
-            }
-          });
+          if (_popAttemptCount == 1) {
+            // 第二次返回，退出App
+            await SystemChannels.platform.invokeMethod('SystemNavigator.pop');
+          } else {
+            setState(() {
+              _popAttemptCount = 1;
+            });
+            FaToast.show(
+              context,
+              minWidth: 100,
+              message: '再次返回将退出App',
+              type: FaToastType.error,
+              position: FaToastPosition.topRight,
+              duration: const Duration(seconds: 5),
+              onDismiss: () {
+                if (mounted) {
+                  setState(() {
+                    _popAttemptCount = 0;
+                  });
+                }
+              },
+            );
+          }
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color.fromARGB(255, 228, 228, 228),
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -191,16 +202,17 @@ class _BiometricAuthPageState extends State<BiometricAuthPage> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text(
-                    widget.description ??
-                        (widget.canPop ? '点击下方图标进行指纹验证' : '请完成指纹验证以继续'),
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: _hasAttemptedPop
-                          ? const Color.fromRGBO(255, 0, 0, 0.7)
-                          : const Color.fromRGBO(0, 0, 0, 0.6),
-                      height: 1.4,
-                      letterSpacing: 0.3,
+                  Center(
+                    child: Text(
+                      widget.description ??
+                          (widget.canPop ? '点击下方图标进行指纹验证' : '请完成指纹验证以继续'),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color.fromRGBO(0, 0, 0, 0.6),
+                        height: 1.4,
+                        letterSpacing: 0.3,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                   Expanded(flex: 4, child: Container()),
@@ -233,4 +245,3 @@ class _BiometricAuthPageState extends State<BiometricAuthPage> {
     );
   }
 }
- 

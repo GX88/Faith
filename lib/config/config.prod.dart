@@ -12,4 +12,8 @@ class ProdConfig extends Config {
 
   @override
   int get cacheMaxAge => 86400; // 生产环境缓存时间更长 (24小时)
+
+  // 是否开启指纹认证
+  @override
+  bool get loginAuthentication => true;
 }

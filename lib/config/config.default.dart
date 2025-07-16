@@ -28,4 +28,7 @@ class Config {
   // 环境判断
   static bool get isProd => instance is ProdConfig;
   static bool get isLocal => instance is LocalConfig;
+
+  // 是否开启指纹认证，默认false，子类可覆盖
+  bool get loginAuthentication => false;
 }
