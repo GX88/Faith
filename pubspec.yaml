@@ -41,6 +41,7 @@ flutter:
   assets:
     - lib/assets/splash/
     - lib/assets/unknown/
+    - lib/assets/bottom_navigation/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

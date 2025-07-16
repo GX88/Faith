@@ -8,3 +8,4 @@ alwaysApply: true
 4. When you're implementing something or fixing a problem, don't automatically scale something else. Unless requested by the user, minimal implementation and best practices are required
 5. Any code generated should be well commented and elegantly formatted
 6. There is no absolutely necessary modification of the content, and it is absolutely not necessary to make modifications
+7. It's important to do your best to combine all the contexts
