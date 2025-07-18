@@ -1,3 +1,4 @@
+import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
@@ -41,6 +42,7 @@ class _BottomNavigationBarPageState extends State<BottomNavigationBarPage>
   late final AnimationController toolLottieController;
   late final AnimationController settingLottieController;
   late final AnimationController exploreLottieController;
+  int _lastIndex = 0;
 
   @override
   void initState() {
@@ -65,7 +67,9 @@ class _BottomNavigationBarPageState extends State<BottomNavigationBarPage>
   }
 
   void _onTabTapped(int index) {
-    // 页面立即切换
+    setState(() {
+      _lastIndex = controller.selectedIndex.value;
+    });
     controller.onTabTapped(index);
     // 如果点击首页tab，播放一次动画
     if (index == 0) {
@@ -162,7 +166,37 @@ class _BottomNavigationBarPageState extends State<BottomNavigationBarPage>
         }
       }
       return Scaffold(
-        body: controller.pages[controller.selectedIndex.value],
+        body: PageTransitionSwitcher(
+          duration: Duration(milliseconds: 350), // 动画更快但不过于突兀
+          transitionBuilder: (child, animation, secondaryAnimation) {
+            final isForward = controller.selectedIndex.value > _lastIndex;
+            final enterOffset = isForward
+                ? Offset(1.0, 0.0)
+                : Offset(-1.0, 0.0);
+            final exitOffset = isForward ? Offset(-1.0, 0.0) : Offset(1.0, 0.0);
+            return SlideTransition(
+              position: animation.drive(
+                Tween<Offset>(
+                  begin: enterOffset,
+                  end: Offset.zero,
+                ).chain(CurveTween(curve: Curves.easeOutCubic)), // 进入平滑
+              ),
+              child: SlideTransition(
+                position: secondaryAnimation.drive(
+                  Tween<Offset>(
+                    begin: Offset.zero,
+                    end: exitOffset,
+                  ).chain(CurveTween(curve: Curves.easeOutCubic)), // 退出平滑
+                ),
+                child: child,
+              ),
+            );
+          },
+          child: KeyedSubtree(
+            key: ValueKey(controller.selectedIndex.value),
+            child: controller.pages[controller.selectedIndex.value],
+          ),
+        ),
         bottomNavigationBar: SizedBox(
           height: 60,
           child: Theme(

@@ -12,5 +12,5 @@ class LocalConfig extends Config {
 
   // 是否开启指纹认证
   @override
-  bool get loginAuthentication => false;
+  bool get loginAuthentication => true;
 }

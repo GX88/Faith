@@ -1,3 +1,4 @@
+import 'package:faith/utils/status_bar_util.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatelessWidget {
@@ -5,8 +6,9 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    setStatusBarStyle(bgColor: const Color(0xFFE3F2FD)); // 自动根据背景色
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 228, 228, 228),
+      backgroundColor: const Color(0xFFE3F2FD), // 淡蓝色，主色调更明显
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [

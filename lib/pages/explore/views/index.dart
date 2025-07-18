@@ -1,3 +1,4 @@
+import 'package:faith/utils/status_bar_util.dart';
 import 'package:flutter/material.dart';
 
 class ExplorePage extends StatelessWidget {
@@ -5,8 +6,9 @@ class ExplorePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    setStatusBarStyle(force: Brightness.dark); // 强制白色内容
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 228, 228, 228),
+      backgroundColor: const Color(0xFFE8F5E9), // 淡绿色，主色调更明显
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [
