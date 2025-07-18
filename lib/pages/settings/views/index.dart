@@ -10,6 +10,7 @@ class SettingsPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFF263238), // 深灰色，主色调更明显
       extendBodyBehindAppBar: true,
+      extendBody: true,
       body: Stack(
         children: [
           // 背景装饰
@@ -39,14 +40,18 @@ class SettingsPage extends StatelessWidget {
           ),
           // 主要内容
           SafeArea(
-            child: Center(
-              child: Text(
-                '设置',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                  letterSpacing: 0.5,
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 100),
+              child: Center(
+                child: Text(
+                  '设置',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
+                  ),
                 ),
               ),
             ),

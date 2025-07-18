@@ -10,6 +10,7 @@ class ToolsPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFFFF9C4), // 淡黄色，主色调更明显
       extendBodyBehindAppBar: true,
+      extendBody: true,
       body: Stack(
         children: [
           // 背景装饰
@@ -39,14 +40,18 @@ class ToolsPage extends StatelessWidget {
           ),
           // 主要内容
           SafeArea(
-            child: Center(
-              child: Text(
-                '工具',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                  letterSpacing: 0.5,
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 100),
+              child: Center(
+                child: Text(
+                  '工具',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                    letterSpacing: 0.5,
+                  ),
                 ),
               ),
             ),

@@ -10,6 +10,7 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFE3F2FD), // 淡蓝色，主色调更明显
       extendBodyBehindAppBar: true,
+      extendBody: true,
       body: Stack(
         children: [
           // 背景装饰
@@ -39,14 +40,18 @@ class HomePage extends StatelessWidget {
           ),
           // 主要内容
           SafeArea(
-            child: Center(
-              child: Text(
-                '首页',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                  letterSpacing: 0.5,
+            bottom: false, // 禁用SafeArea的底部保护，让内容延伸到悬浮导航栏区域
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 100), // 添加底部内边距避免被悬浮导航栏遮挡
+              child: Center(
+                child: Text(
+                  '首页',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                    letterSpacing: 0.5,
+                  ),
                 ),
               ),
             ),

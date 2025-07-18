@@ -166,128 +166,152 @@ class _BottomNavigationBarPageState extends State<BottomNavigationBarPage>
         }
       }
       return Scaffold(
-        body: PageTransitionSwitcher(
-          duration: Duration(milliseconds: 350), // 动画更快但不过于突兀
-          transitionBuilder: (child, animation, secondaryAnimation) {
-            final isForward = controller.selectedIndex.value > _lastIndex;
-            final enterOffset = isForward
-                ? Offset(1.0, 0.0)
-                : Offset(-1.0, 0.0);
-            final exitOffset = isForward ? Offset(-1.0, 0.0) : Offset(1.0, 0.0);
-            return SlideTransition(
-              position: animation.drive(
-                Tween<Offset>(
-                  begin: enterOffset,
-                  end: Offset.zero,
-                ).chain(CurveTween(curve: Curves.easeOutCubic)), // 进入平滑
+        extendBody: true, // 允许内容延伸到bottomNavigationBar区域
+        body: Stack(
+          children: [
+            // 页面内容
+            Positioned.fill(
+              child: PageTransitionSwitcher(
+                duration: Duration(milliseconds: 350),
+                transitionBuilder: (child, animation, secondaryAnimation) {
+                  final isForward = controller.selectedIndex.value > _lastIndex;
+                  final enterOffset = isForward
+                      ? Offset(1.0, 0.0)
+                      : Offset(-1.0, 0.0);
+                  final exitOffset = isForward ? Offset(-1.0, 0.0) : Offset(1.0, 0.0);
+                  return SlideTransition(
+                    position: animation.drive(
+                      Tween<Offset>(
+                        begin: enterOffset,
+                        end: Offset.zero,
+                      ).chain(CurveTween(curve: Curves.easeOutCubic)),
+                    ),
+                    child: SlideTransition(
+                      position: secondaryAnimation.drive(
+                        Tween<Offset>(
+                          begin: Offset.zero,
+                          end: exitOffset,
+                        ).chain(CurveTween(curve: Curves.easeOutCubic)),
+                      ),
+                      child: child,
+                    ),
+                  );
+                },
+                child: KeyedSubtree(
+                  key: ValueKey(controller.selectedIndex.value),
+                  child: controller.pages[controller.selectedIndex.value],
+                ),
               ),
-              child: SlideTransition(
-                position: secondaryAnimation.drive(
-                  Tween<Offset>(
-                    begin: Offset.zero,
-                    end: exitOffset,
-                  ).chain(CurveTween(curve: Curves.easeOutCubic)), // 退出平滑
+            ),
+            // 悬浮底部导航栏
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 20,
+              child: Container(
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.95),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
                 ),
-                child: child,
+                child: Theme(
+                  data: Theme.of(context).copyWith(
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
+                    splashFactory: NoSplash.splashFactory,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: BottomNavigationBar(
+                      currentIndex: controller.selectedIndex.value,
+                      onTap: _onTabTapped,
+                      type: BottomNavigationBarType.fixed,
+                      selectedItemColor: Colors.black,
+                      unselectedItemColor: Colors.grey,
+                      elevation: 0,
+                      backgroundColor: Colors.transparent,
+                      items: [
+                        BottomNavigationBarItem(
+                          icon: Padding(
+                            padding: EdgeInsets.only(bottom: 4),
+                            child: Lottie.asset(
+                              'lib/assets/bottom_navigation/home.json',
+                              width: 26,
+                              height: 26,
+                              controller: lottieController,
+                              onLoaded: (composition) {
+                                lottieController.duration = composition.duration;
+                              },
+                              repeat: false,
+                            ),
+                          ),
+                          label: '首页',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Padding(
+                            padding: EdgeInsets.only(bottom: 4),
+                            child: Lottie.asset(
+                              'lib/assets/bottom_navigation/explore.json',
+                              width: 26,
+                              height: 26,
+                              controller: exploreLottieController,
+                              onLoaded: (composition) {
+                                exploreLottieController.duration = composition.duration;
+                              },
+                              repeat: false,
+                            ),
+                          ),
+                          label: '探索',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Padding(
+                            padding: EdgeInsets.only(bottom: 4),
+                            child: Lottie.asset(
+                              'lib/assets/bottom_navigation/tool.json',
+                              width: 26,
+                              height: 26,
+                              controller: toolLottieController,
+                              onLoaded: (composition) {
+                                toolLottieController.duration = composition.duration;
+                              },
+                              repeat: false,
+                            ),
+                          ),
+                          label: '工具',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Padding(
+                            padding: EdgeInsets.only(bottom: 4),
+                            child: Lottie.asset(
+                              'lib/assets/bottom_navigation/setting.json',
+                              width: 26,
+                              height: 26,
+                              controller: settingLottieController,
+                              onLoaded: (composition) {
+                                settingLottieController.duration = composition.duration;
+                              },
+                              repeat: false,
+                            ),
+                          ),
+                          label: '设置',
+                        ),
+                      ],
+                      selectedFontSize: 10,
+                      unselectedFontSize: 10,
+                      showUnselectedLabels: true,
+                    ),
+                  ),
+                ),
               ),
-            );
-          },
-          child: KeyedSubtree(
-            key: ValueKey(controller.selectedIndex.value),
-            child: controller.pages[controller.selectedIndex.value],
-          ),
-        ),
-        bottomNavigationBar: SizedBox(
-          height: 60,
-          child: Theme(
-            data: Theme.of(context).copyWith(
-              splashColor: Colors.transparent, // 去除水波纹
-              highlightColor: Colors.transparent, // 去除高亮
-              splashFactory: NoSplash.splashFactory, // 禁用所有点击动画
             ),
-            child: BottomNavigationBar(
-              currentIndex: controller.selectedIndex.value,
-              onTap: _onTabTapped, // 使用自定义点击逻辑
-              type: BottomNavigationBarType.fixed,
-              selectedItemColor: Colors.black, // 选中为黑色
-              unselectedItemColor: Colors.grey, // 未选中为灰色
-              items: [
-                BottomNavigationBarItem(
-                  // 首页tab使用Lottie动画，点击时播放一次
-                  icon: Padding(
-                    padding: EdgeInsets.only(bottom: 4),
-                    child: Lottie.asset(
-                      'lib/assets/bottom_navigation/home.json',
-                      width: 26,
-                      height: 26,
-                      controller: lottieController,
-                      onLoaded: (composition) {
-                        lottieController.duration = composition.duration;
-                      },
-                      repeat: false,
-                    ),
-                  ),
-                  label: '首页',
-                ),
-                BottomNavigationBarItem(
-                  // 探索tab使用Lottie动画，点击时播放一次
-                  icon: Padding(
-                    padding: EdgeInsets.only(bottom: 4),
-                    child: Lottie.asset(
-                      'lib/assets/bottom_navigation/explore.json',
-                      width: 26,
-                      height: 26,
-                      controller: exploreLottieController,
-                      onLoaded: (composition) {
-                        exploreLottieController.duration = composition.duration;
-                      },
-                      repeat: false,
-                    ),
-                  ),
-                  label: '探索',
-                ),
-                BottomNavigationBarItem(
-                  // 工具tab使用Lottie动画，点击时播放一次
-                  icon: Padding(
-                    padding: EdgeInsets.only(bottom: 4),
-                    child: Lottie.asset(
-                      'lib/assets/bottom_navigation/tool.json',
-                      width: 26,
-                      height: 26,
-                      controller: toolLottieController,
-                      onLoaded: (composition) {
-                        toolLottieController.duration = composition.duration;
-                      },
-                      repeat: false,
-                    ),
-                  ),
-                  label: '工具',
-                ),
-                BottomNavigationBarItem(
-                  // 设置tab使用Lottie动画，点击时播放一次
-                  icon: Padding(
-                    padding: EdgeInsets.only(bottom: 4),
-                    child: Lottie.asset(
-                      'lib/assets/bottom_navigation/setting.json',
-                      width: 26,
-                      height: 26,
-                      controller: settingLottieController,
-                      onLoaded: (composition) {
-                        settingLottieController.duration = composition.duration;
-                      },
-                      repeat: false,
-                    ),
-                  ),
-                  label: '设置',
-                ),
-              ],
-              selectedFontSize: 10,
-              unselectedFontSize: 10,
-              showUnselectedLabels: true,
-              elevation: 0,
-              backgroundColor: Colors.white,
-            ),
-          ),
+          ],
         ),
       );
     });
