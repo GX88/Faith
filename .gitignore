@@ -88,3 +88,10 @@ coverage/
 
 # Flutter Version Management
 .fvm/
+
+# test
+test/test.py
+test/.python-version
+test/main.py
+test/pyproject.toml
+test/uv.lock
