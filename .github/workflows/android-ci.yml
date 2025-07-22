@@ -43,7 +43,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: '3.16.9'  # 对应Dart 3.8.1的稳定版本
+          flutter-version: '3.32.5'  # 与你本地版本一致
 
       - name: 📥 获取依赖包
         run: flutter pub get
@@ -62,17 +62,13 @@ jobs:
           flutter analyze
           flutter format --set-exit-if-changed .
 
-      - name: 🏗️ 构建APK (按ABI分包)
-        run: flutter build apk --release --split-per-abi
-
       - name: 🏗️ 构建通用APK
         run: flutter build apk --release
 
       - name: 📦 准备构建产物
         run: |
           mkdir -p artifacts
-          cp build/app/outputs/flutter-apk/*.apk artifacts/
-          cp build/app/outputs/flutter-apk/app-release.apk artifacts/faith-${GITHUB_REF_NAME}.apk
+          cp build/app/outputs/flutter-apk/app-release.apk artifacts/faith-${GITHUB_REF_NAME:-latest}.apk
 
       - name: 📤 上传构建产物
         uses: actions/upload-artifact@v4
