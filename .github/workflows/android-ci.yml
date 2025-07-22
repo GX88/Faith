@@ -43,7 +43,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: '3.8.0'
+          flutter-version: '3.16.9'  # 对应Dart 3.8.1的稳定版本
 
       - name: 📥 获取依赖包
         run: flutter pub get
