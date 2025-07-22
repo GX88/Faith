@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:faith/comm/services/update_service.dart';
 import 'package:faith/config/config.default.dart';
 import 'package:faith/router/index.dart';
 import 'package:flutter/material.dart';
@@ -63,6 +64,13 @@ Future<void> main() async {
 
 Future<void> _initializeApp() async {
   WidgetsFlutterBinding.ensureInitialized(); // 确保Flutter绑定初始化
+
+  // 初始化下载服务
+  await Get.putAsync(() async {
+    final service = DownloadService();
+    service.onInit(); // 这里会自动检查更新
+    return service;
+  }, permanent: true);
 
   // 初始化配置
   // 这里不需要显式调用 Config.instance，因为第一次访问时会自动初始化

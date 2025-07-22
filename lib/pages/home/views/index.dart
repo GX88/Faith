@@ -1,8 +1,50 @@
+import 'package:faith/comm/services/update_service.dart';
+import 'package:faith/comm/ui/fa_bottom_sheet/index.dart';
+import 'package:faith/comm/views/update_checker.dart';
 import 'package:faith/utils/status_bar_util.dart';
 import 'package:flutter/material.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final DownloadService _downloadService = DownloadService.to;
+
+  @override
+  void initState() {
+    super.initState();
+    // 配置底部弹层行为
+    FaBottomSheetConfig.updateConfig(
+      allowDismissible: true,
+      allowDrag: true,
+      backdropOpacity: 0.5,
+      animationDuration: const Duration(milliseconds: 300),
+    );
+    // 在页面加载后检查更新状态
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkUpdateStatus();
+    });
+  }
+
+  // 检查更新状态并显示底部弹层
+  void _checkUpdateStatus() async {
+    if (_downloadService.needUpdate()) {
+      await FaBottomSheet.show(
+        showDragHandle: true,
+        backgroundColor: const Color.fromARGB(255, 228, 228, 228),
+        onDismiss: () {
+          if (_downloadService.downloadProgress.isEmpty) {
+            _downloadService.hideUpdateTip();
+          }
+        },
+        child: const UpdateChecker(),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -11,6 +53,19 @@ class HomePage extends StatelessWidget {
       backgroundColor: const Color(0xFFE3F2FD), // 淡蓝色，主色调更明显
       extendBodyBehindAppBar: true,
       extendBody: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.system_update),
+            onPressed: () async {
+              await _downloadService.checkUpdate();
+              _checkUpdateStatus();
+            },
+          ),
+        ],
+      ),
       body: Stack(
         children: [
           // 背景装饰
@@ -39,21 +94,10 @@ class HomePage extends StatelessWidget {
             ),
           ),
           // 主要内容
-          SafeArea(
-            bottom: false, // 禁用SafeArea的底部保护，让内容延伸到悬浮导航栏区域
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 100), // 添加底部内边距避免被悬浮导航栏遮挡
-              child: Center(
-                child: Text(
-                  '首页',
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
+          const Center(
+            child: Text(
+              '首页',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
           ),
         ],
