@@ -13,4 +13,11 @@ class LocalConfig extends Config {
   // 是否开启指纹认证
   @override
   bool get loginAuthentication => false;
+
+  // 开发环境更新APK配置
+  @override
+  String get updateApkUrl =>
+      'https://cdn4.cdn-telegram.org/file/Telegram.apk';
+  @override
+  String get updateApkFileName => 'faith.dev.apk';
 }

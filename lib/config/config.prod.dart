@@ -16,4 +16,11 @@ class ProdConfig extends Config {
   // 是否开启指纹认证
   @override
   bool get loginAuthentication => true;
+
+  // 生产环境更新APK配置
+  @override
+  String get updateApkUrl =>
+      'https://yourdomain.com/path/to/your_app_release.apk';
+  @override
+  String get updateApkFileName => 'faith.apk';
 }

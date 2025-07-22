@@ -159,10 +159,42 @@ class UpdateChecker extends GetView<DownloadService> {
               children: [
                 if (downloadProgress.isNotEmpty)
                   Expanded(
-                    child: FaButton(
-                      text: '后台下载',
-                      type: FaButtonType.outline,
-                      onPressed: () => Get.back(closeOverlays: true),
+                    child: Builder(
+                      builder: (context) {
+                        final taskId = downloadProgress.keys.first;
+                        final status =
+                            downloadStatus[taskId] ??
+                            DownloadTaskStatus.undefined;
+                        if (status == DownloadTaskStatus.complete) {
+                          // 下载完成，显示“稍后安装”和“立即安装”
+                          return Row(
+                            children: [
+                              Expanded(
+                                child: FaButton(
+                                  text: '稍后安装',
+                                  type: FaButtonType.outline,
+                                  onPressed: () =>
+                                      Get.back(closeOverlays: true),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: FaButton(
+                                  text: '立即安装',
+                                  onPressed: () => controller.installApk(),
+                                ),
+                              ),
+                            ],
+                          );
+                        } else {
+                          // 下载中，显示后台下载按钮
+                          return FaButton(
+                            text: '后台下载',
+                            type: FaButtonType.outline,
+                            onPressed: () => Get.back(closeOverlays: true),
+                          );
+                        }
+                      },
                     ),
                   )
                 else ...[

@@ -12,6 +12,10 @@ class Config {
   String get appVersion => '1.0.0';
   int get cacheMaxAge => 7200; // 2小时
 
+  // 新增：更新APK下载地址和文件名配置（由子类实现）
+  String get updateApkUrl => '';
+  String get updateApkFileName => '';
+
   // 单例实现
   static Config? _instance;
 

@@ -1,8 +1,11 @@
-import 'dart:math';
+import 'dart:io';
 
+import 'package:faith/config/config.default.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:get/get.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../utils/update_util.dart';
 
@@ -10,6 +13,11 @@ class DownloadService extends GetxService {
   static DownloadService get to => Get.find();
 
   final DownloadUtils _downloadUtils = DownloadUtils();
+
+  // 新增：安装模式（auto/手动manual）
+  String installMode = 'manual';
+  // 新增：保存APK路径
+  String? _apkPath;
 
   // 下载状态
   final RxMap<String, double> _downloadProgress = <String, double>{}.obs;
@@ -23,9 +31,6 @@ class DownloadService extends GetxService {
 
   // 添加下载任务ID记录
   String? _currentTaskId;
-
-  // 是否使用模拟下载（测试用）
-  final bool _useMockDownload = false;
 
   // 公共 getter
   bool get hasNewVersion => _hasNewVersion.value;
@@ -92,7 +97,6 @@ class DownloadService extends GetxService {
   }
 
   void _onDownloadProgress(String id, DownloadTaskStatus status, int progress) {
-    print('DownloadService: _onDownloadProgress $id, $status, $progress');
     _downloadProgress[id] = progress / 100;
     _downloadStatus[id] = status;
     // 下载完成或失败时的处理
@@ -103,7 +107,10 @@ class DownloadService extends GetxService {
     }
   }
 
-  void _onDownloadComplete(String taskId) {
+  void _onDownloadComplete(String taskId) async {
+    // 直接指定为正式包路径
+    _apkPath =
+        '/storage/emulated/0/Download/${Config.instance.updateApkFileName}';
     Get.snackbar(
       '下载完成',
       '文件已成功下载',
@@ -111,8 +118,9 @@ class DownloadService extends GetxService {
       backgroundColor: Colors.green,
       colorText: Colors.white,
     );
-    // 清理下载记录
-    _clearDownloadRecord();
+    if (installMode == 'auto') {
+      installApk();
+    }
   }
 
   void _onDownloadFailed(String taskId) {
@@ -123,6 +131,22 @@ class DownloadService extends GetxService {
       backgroundColor: Colors.red,
       colorText: Colors.white,
     );
+  }
+
+  // 新增：手动调用安装
+  void installApk() {
+    if (_apkPath != null) {
+      OpenFilex.open(_apkPath!);
+      _clearDownloadRecord(); // 安装后再清理
+    } else {
+      Get.snackbar(
+        '安装失败',
+        '未找到安装包路径',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
   }
 
   // 清理下载记录
@@ -137,13 +161,12 @@ class DownloadService extends GetxService {
   /// 检查更新
   Future<bool> checkUpdate() async {
     try {
-      // 模拟检查更新
-      await Future.delayed(const Duration(seconds: 1));
-      _hasNewVersion.value = true;
-      _newVersionInfo.value = '发现新版本 1.0.1\n1. 优化用户体验\n2. 修复已知问题\n3. 新增更多功能';
-      // 使用小文件进行真实下载测试
-      _downloadUrl.value = 'https://nbg1-speed.hetzner.com/100MB.bin';
-
+      // 正式环境下应通过接口获取版本信息，这里仅作示例
+      await Future.delayed(const Duration(milliseconds: 500));
+      _hasNewVersion.value = true; // TODO: 正式环境应根据接口返回判断
+      _newVersionInfo.value =
+          '发现新版本 1.0.1\n1. 优化体验\n2. 修复问题'; // TODO: 正式环境应根据接口返回
+      _downloadUrl.value = Config.instance.updateApkUrl;
       return _hasNewVersion.value;
     } catch (e) {
       print('检查更新失败: $e');
@@ -156,8 +179,6 @@ class DownloadService extends GetxService {
     if (!_hasNewVersion.value || _downloadUrl.value.isEmpty) {
       return null;
     }
-
-    // 开始新下载前，清除可能存在的旧任务
     if (_currentTaskId != null) {
       await _downloadUtils.removeDownload(
         _currentTaskId!,
@@ -165,144 +186,39 @@ class DownloadService extends GetxService {
       );
       _clearDownloadRecord();
     }
-
     String? taskId;
-    if (_useMockDownload) {
-      // 模拟下载
-      taskId = DateTime.now().millisecondsSinceEpoch.toString();
-      _startMockDownload(taskId);
-    } else {
-      // 实际下载
-      taskId = await _downloadUtils.startDownload(
-        url: _downloadUrl.value,
-        fileName: 'app-release.apk',
-        showNotification: true,
-        openFileFromNotification: true,
-      );
+    String downloadDir = '/storage/emulated/0/Download';
+    if (!Platform.isAndroid) {
+      final dir = await getExternalStorageDirectory();
+      if (dir != null) downloadDir = dir.path;
     }
-
+    taskId = await _downloadUtils.startDownload(
+      url: _downloadUrl.value,
+      fileName: Config.instance.updateApkFileName,
+      savedDir: downloadDir,
+      showNotification: true,
+      openFileFromNotification: true,
+    );
     if (taskId != null) {
       _currentTaskId = taskId;
       _downloadProgress[taskId] = 0.0;
       _downloadStatus[taskId] = DownloadTaskStatus.enqueued;
     }
-
     return taskId;
-  }
-
-  /// 模拟下载进度
-  Future<void> _startMockDownload(String taskId) async {
-    _downloadStatus[taskId] = DownloadTaskStatus.running;
-
-    // 模拟下载进度，总时长60秒
-    const totalDuration = Duration(seconds: 60);
-    const updateInterval = Duration(milliseconds: 500); // 每500毫秒更新一次
-    int steps = totalDuration.inMilliseconds ~/ updateInterval.inMilliseconds;
-    double progressPerStep = 1.0 / steps;
-
-    for (int i = 0; i <= steps; i++) {
-      await Future.delayed(updateInterval);
-      if (_downloadStatus[taskId] == DownloadTaskStatus.paused) {
-        break;
-      }
-      if (_downloadStatus[taskId] == DownloadTaskStatus.canceled) {
-        _clearDownloadRecord();
-        break;
-      }
-      _downloadProgress[taskId] = (i * progressPerStep).clamp(0.0, 1.0);
-
-      // 模拟随机失败（5%的概率）
-      if (i > steps ~/ 2 && Random().nextDouble() < 0.05) {
-        _downloadStatus[taskId] = DownloadTaskStatus.failed;
-        _onDownloadFailed(taskId);
-        break;
-      }
-
-      // 下载完成
-      if (i == steps) {
-        _downloadStatus[taskId] = DownloadTaskStatus.complete;
-        _onDownloadComplete(taskId);
-      }
-    }
-  }
-
-  /// 继续模拟下载
-  Future<void> _continueMockDownload(
-    String taskId,
-    double currentProgress,
-  ) async {
-    const totalDuration = Duration(seconds: 60);
-    const updateInterval = Duration(milliseconds: 500);
-    int remainingSteps =
-        ((1.0 - currentProgress) *
-                totalDuration.inMilliseconds ~/
-                updateInterval.inMilliseconds)
-            .toInt();
-    double progressPerStep = (1.0 - currentProgress) / remainingSteps;
-
-    for (int i = 0; i <= remainingSteps; i++) {
-      await Future.delayed(updateInterval);
-      if (_downloadStatus[taskId] == DownloadTaskStatus.paused) {
-        break;
-      }
-      if (_downloadStatus[taskId] == DownloadTaskStatus.canceled) {
-        _clearDownloadRecord();
-        break;
-      }
-      _downloadProgress[taskId] = (currentProgress + i * progressPerStep).clamp(
-        0.0,
-        1.0,
-      );
-
-      // 模拟随机失败（5%的概率）
-      if (i > remainingSteps ~/ 2 && Random().nextDouble() < 0.05) {
-        _downloadStatus[taskId] = DownloadTaskStatus.failed;
-        _onDownloadFailed(taskId);
-        break;
-      }
-
-      // 下载完成
-      if (i == remainingSteps) {
-        _downloadStatus[taskId] = DownloadTaskStatus.complete;
-        _onDownloadComplete(taskId);
-      }
-    }
   }
 
   /// 暂停下载
   Future<bool> pauseDownload(String taskId) async {
-    if (_useMockDownload) {
-      if (_downloadStatus[taskId] == DownloadTaskStatus.running) {
-        _downloadStatus[taskId] = DownloadTaskStatus.paused;
-        return true;
-      }
-      return false;
-    }
     return await _downloadUtils.pauseDownload(taskId);
   }
 
   /// 恢复下载
   Future<String?> resumeDownload(String taskId) async {
-    if (_useMockDownload) {
-      if (_downloadStatus[taskId] == DownloadTaskStatus.paused) {
-        _downloadStatus[taskId] = DownloadTaskStatus.running;
-        double currentProgress = _downloadProgress[taskId] ?? 0.0;
-        _continueMockDownload(taskId, currentProgress);
-      }
-      return taskId;
-    }
     return await _downloadUtils.resumeDownload(taskId);
   }
 
   /// 取消下载
   Future<bool> cancelDownload(String taskId) async {
-    if (_useMockDownload) {
-      _downloadStatus[taskId] = DownloadTaskStatus.canceled;
-      _clearDownloadRecord();
-      // 重新显示更新提示
-      _hasNewVersion.value = true;
-      return true;
-    }
     final result = await _downloadUtils.cancelDownload(taskId);
     if (result) {
       await _downloadUtils.removeDownload(taskId, shouldDeleteContent: true);
