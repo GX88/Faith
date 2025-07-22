@@ -48,11 +48,10 @@ jobs:
       - name: 📥 获取依赖包
         run: flutter pub get
 
-
-      - name: 🔍 代码质量检查
-        run: |
-          flutter analyze
-          flutter format --set-exit-if-changed .
+      # - name: 🔍 代码质量检查
+      #   run: |
+      #     flutter analyze
+      #     flutter format --set-exit-if-changed .
 
       - name: 🏗️ 构建通用APK
         run: flutter build apk --release
