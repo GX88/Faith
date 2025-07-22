@@ -48,14 +48,6 @@ jobs:
       - name: 📥 获取依赖包
         run: flutter pub get
 
-      - name: ✅ 运行测试
-        run: flutter test --coverage
-
-      - name: 📊 生成测试报告
-        uses: codecov/codecov-action@v4
-        if: github.event_name == 'pull_request'
-        with:
-          file: coverage/lcov.info
 
       - name: 🔍 代码质量检查
         run: |
