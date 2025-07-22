@@ -1,0 +1,108 @@
+name: 🛠 Android CI / 构建并发布APK
+
+on:
+  push:
+    branches: [ main, master ]
+    tags:    [ 'v*.*.*' ]
+  pull_request:
+    branches: [ main, master ]
+
+permissions:
+  contents: write   # 允许创建/更新版本和上传资源
+  actions:  read    # 允许拉取市场动作
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_and_release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📂 检出代码
+        uses: actions/checkout@v4
+
+      - name: 🚀 缓存Flutter依赖
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.pub-cache
+            build/
+          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-
+
+      - name: ☕️ 设置Java环境 (Temurin 17)
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: 🦋 设置Flutter环境
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.8.0'
+
+      - name: 📥 获取依赖包
+        run: flutter pub get
+
+      - name: ✅ 运行测试
+        run: flutter test --coverage
+
+      - name: 📊 生成测试报告
+        uses: codecov/codecov-action@v3
+        if: github.event_name == 'pull_request'
+        with:
+          file: coverage/lcov.info
+
+      - name: 🔍 代码质量检查
+        run: |
+          flutter analyze
+          flutter format --set-exit-if-changed .
+
+      - name: 🏗️ 构建APK (按ABI分包)
+        run: flutter build apk --release --split-per-abi
+
+      - name: 🏗️ 构建通用APK
+        run: flutter build apk --release
+
+      - name: 📦 准备构建产物
+        run: |
+          mkdir -p artifacts
+          cp build/app/outputs/flutter-apk/*.apk artifacts/
+          cp build/app/outputs/flutter-apk/app-release.apk artifacts/faith-${GITHUB_REF_NAME}.apk
+
+      - name: 📤 上传构建产物
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-apks
+          path: artifacts/
+          retention-days: 30
+
+      # ─────────────── 仅在打标签时发布 ───────────────
+      - name: 🏷️ 创建或更新版本发布
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: ncipollo/release-action@v1.12.0
+        with:
+          tag:       ${{ github.ref_name }}
+          name:      版本发布 ${{ github.ref_name }}
+          body: |
+            ## 📱 Faith应用 ${{ github.ref_name }} 版本发布
+            
+            ### 📦 构建产物
+            - 通用APK: `faith-${{ github.ref_name }}.apk`
+            - 按ABI分包的APK文件
+            
+            ### ✅ 更新内容
+            - 查看提交历史获取详细更新内容
+            
+            ### 📥 安装说明
+            1. 下载对应你设备的APK文件
+            2. 允许安装未知来源应用
+            3. 安装并享受新功能！
+          artifacts: artifacts/*.apk
+          token:     ${{ secrets.GITHUB_TOKEN }}
+          generateReleaseNotes: true
+          allowUpdates: true
