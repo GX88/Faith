@@ -82,7 +82,7 @@ jobs:
           git tag ${{ env.TAG }}
           git push origin ${{ env.TAG }}
 
-      - name: 🚀 发布到公开仓 faith-release
+      - name: 🚀 发布到公开仓
         if: env.TAG_EXISTS == 'false'
         uses: ncipollo/release-action@v1.14.0
         with:
