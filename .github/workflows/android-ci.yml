@@ -61,9 +61,9 @@ jobs:
           cd build/app/outputs/flutter-apk
           sha1sum app-release.apk | cut -d' ' -f1 > app-release.apk.sha1
           # 统一放到 artifacts，文件名带版本号
-          mkdir -p ../../../artifacts
-          mv app-release.apk        "../../../artifacts/faith-preview-${{ env.VERSION }}.apk"
-          mv app-release.apk.sha1   "../../../artifacts/faith-preview-${{ env.VERSION }}.apk.sha1"
+          mkdir -p "$GITHUB_WORKSPACE/artifacts"
+          cp app-release.apk        "$GITHUB_WORKSPACE/artifacts/faith-preview-${{ env.VERSION }}.apk"
+          cp app-release.apk.sha1   "$GITHUB_WORKSPACE/artifacts/faith-preview-${{ env.VERSION }}.apk.sha1"
 
       # 6. 上传 CI 产物（供调试）
       - name: 📤 上传 CI 产物
