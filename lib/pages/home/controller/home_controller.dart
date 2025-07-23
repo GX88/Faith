@@ -2,16 +2,11 @@
 import 'package:faith/comm/services/update_service.dart';
 import 'package:faith/comm/views/update_checker.dart';
 import 'package:faith/utils/update_util.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
 class HomeController extends GetxController {
   /// 标记“已弹过”
   final RxBool _alreadyShown = false.obs;
-
-  /// 当前本地版本
-  String get _localVersion => Get.find<PackageInfo>().version;
 
   @override
   void onReady() {
