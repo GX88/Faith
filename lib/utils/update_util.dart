@@ -77,7 +77,12 @@ class AppUpdateTool {
     final ok = await _requestPermissions();
     if (!ok) return null;
 
-    final dir = (await getTemporaryDirectory()).path;
+    // 使用Download目录
+    final downloadDir = Directory('/storage/emulated/0/Download/Faith/updates');
+    if (!await downloadDir.exists()) {
+      await downloadDir.create(recursive: true);
+    }
+    final dir = downloadDir.path;
     final fileName = 'faith-${rv.tag}.apk';
 
     // 已存在任务则继续，否则新建
