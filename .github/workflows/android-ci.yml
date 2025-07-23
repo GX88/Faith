@@ -1,17 +1,13 @@
-name: 🛠 Android CI / 构建并发布 APK（拆仓版）
+name: 🛠 Android CI / 自动版本发布（拆仓）
 
 on:
   push:
     branches: [ main, master ]
-    tags:    [ 'v*.*.*' ]
+  workflow_dispatch:
 
 permissions:
   contents: write
-  actions:  read
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  actions: read
 
 jobs:
   build_and_release:
@@ -21,20 +17,11 @@ jobs:
       # 1. 检出私有源码
       - name: 📂 检出代码
         uses: actions/checkout@v4
-
-      # 2. 缓存 Flutter 依赖
-      - name: 🚀 缓存 Flutter 依赖
-        uses: actions/cache@v4
         with:
-          path: |
-            ~/.pub-cache
-            build/
-          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-flutter-
+          token: ${{ secrets.MY_PERSON_TOKEN }}   # 用于推送 tag
 
-      # 3. Java & Flutter 环境
-      - name: ☕️ 设置 Java环境 (Temurin 17)
+      # 2. Java & Flutter 环境
+      - name: ☕️ 设置 Java 环境 (Temurin 17)
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -44,53 +31,72 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: '3.32.5'
 
-      # 4. 依赖 & 构建
-      - name: 📥 获取依赖包
-        run: flutter pub get
-
-      - name: 🏗️ 构建通用 APK
-        run: flutter build apk --release
-
-      # 5. 准备产物目录
-      - name: 📦 准备构建产物
+      # 3. 构建 APK
+      - name: 📥 获取依赖 & 构建
         run: |
-          mkdir -p artifacts
-          cp build/app/outputs/flutter-apk/app-release.apk artifacts/faith-${GITHUB_REF_NAME}.apk
+          flutter pub get
+          flutter build apk --release
 
-      # 6. 生成 SHA-1 校验文件
-      - name: 🔐 生成 SHA-1
-        if: startsWith(github.ref, 'refs/tags/v')
+      # 4. 解析 version 并检测公开仓是否已存在对应 tag
+      - name: 🔍 解析 version
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version:[[:space:]]*//' | cut -d'+' -f1)
+          TAG="v${VERSION}"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "TAG=$TAG"         >> $GITHUB_ENV
+
+          EXISTS=$(curl -s -o /dev/null -w "%{http_code}" \
+                    https://api.github.com/repos/GX88/faith-release/releases/tags/${TAG})
+          if [ "$EXISTS" = "200" ]; then
+            echo "TAG_EXISTS=true" >> $GITHUB_ENV
+          else
+            echo "TAG_EXISTS=false" >> $GITHUB_ENV
+          fi
+
+      # 5. 生成 SHA-1 并改名
+      - name: 🔐 生成 SHA-1 & 重命名产物
         run: |
           cd build/app/outputs/flutter-apk
           sha1sum app-release.apk | cut -d' ' -f1 > app-release.apk.sha1
-          cp app-release.apk.sha1 ../../../artifacts/faith-${GITHUB_REF_NAME}.apk.sha1
+          # 统一放到 artifacts，文件名带版本号
+          mkdir -p ../../../artifacts
+          mv app-release.apk        "../../../artifacts/faith-preview-${{ env.VERSION }}.apk"
+          mv app-release.apk.sha1   "../../../artifacts/faith-preview-${{ env.VERSION }}.apk.sha1"
 
-      # 7. 上传 CI 产物（供调试）
+      # 6. 上传 CI 产物（供调试）
       - name: 📤 上传 CI 产物
         uses: actions/upload-artifact@v4
         with:
-          name: android-apks-${{ github.run_number }}
+          name: faith-preview-${{ env.VERSION }}
           path: artifacts/
-          retention-days: 30
+          retention-days: 7
 
-      # 8. 发布到公开仓库 faith-release
-      - name: 🚀 发布到公开仓
-        if: startsWith(github.ref, 'refs/tags/v')
+      # 7. 若 tag 不存在 → 自动打 tag 并发布到公开仓
+      - name: 🏷️ 创建并推送 tag
+        if: env.TAG_EXISTS == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag ${{ env.TAG }}
+          git push origin ${{ env.TAG }}
+
+      - name: 🚀 发布到公开仓 faith-release
+        if: env.TAG_EXISTS == 'false'
         uses: ncipollo/release-action@v1.14.0
         with:
           owner: GX88
           repo: faith-release
-          tag: ${{ github.ref_name }}
-          name: Faith ${{ github.ref_name }}
+          tag: ${{ env.TAG }}
+          name: Faith ${{ env.TAG }}
           body: |
-            ## 📱 版本发布 ${{ github.ref_name }}
-            - 通用 APK：`faith-${{ github.ref_name }}.apk`
-            - SHA-1：`faith-${{ github.ref_name }}.apk.sha1`
+            ## 📱 Faith 版本发布 ${{ env.TAG }}
+            - APK: `faith-preview-${{ env.VERSION }}.apk`
+            - SHA-1: `faith-preview-${{ env.VERSION }}.apk.sha1`
           artifacts: |
-            artifacts/faith-${{ github.ref_NAME }}.apk
-            artifacts/faith-${{ github.ref_NAME }}.apk.sha1
+            artifacts/faith-preview-${{ env.VERSION }}.apk
+            artifacts/faith-preview-${{ env.VERSION }}.apk.sha1
           token: ${{ secrets.MY_PERSON_TOKEN }}
           generateReleaseNotes: true
           allowUpdates: true
