@@ -1,7 +1,7 @@
 name: faith
 description: "A new Flutter project."
 publish_to: 'none' # Remove this line if you wish to publish to pub.
-version: 1.0.0+1
+version: 0.2.0+2
 
 environment:
   sdk: ^3.8.1
@@ -11,6 +11,8 @@ dependencies:
     sdk: flutter
 
   permission_handler: ^12.0.1 # 权限管理
+
+  package_info_plus: ^8.2.0 # 获取版本信息
 
   cupertino_icons: ^1.0.8 # 图标
 
@@ -37,7 +39,9 @@ dependencies:
 
   flutter_downloader: ^1.12.0 # 下载更新
 
-  open_filex: ^4.6.0 # 安装应用（替代install_plugin，活跃维护）
+  open_filex: ^4.6.0 # 安装应用
+
+  crypto: ^3.0.6 # 加密
 
 dev_dependencies:
   flutter_test:

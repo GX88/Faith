@@ -6,8 +6,10 @@ import 'package:faith/router/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 
 Future<void> main() async {
@@ -63,14 +65,15 @@ Future<void> main() async {
 }
 
 Future<void> _initializeApp() async {
-  WidgetsFlutterBinding.ensureInitialized(); // 确保Flutter绑定初始化
-
-  // 初始化下载服务
-  await Get.putAsync(() async {
-    final service = DownloadService();
-    service.onInit(); // 这里会自动检查更新
-    return service;
-  }, permanent: true);
+  // 确保Flutter绑定初始化
+  WidgetsFlutterBinding.ensureInitialized();
+  // 注入 PackageInfo
+  final packageInfo = await PackageInfo.fromPlatform();
+  Get.put<PackageInfo>(packageInfo);
+  // 初始化下载器
+  await FlutterDownloader.initialize();
+  // 检查更新
+  await Get.putAsync(() => UpdateService().init());
 
   // 初始化配置
   // 这里不需要显式调用 Config.instance，因为第一次访问时会自动初始化

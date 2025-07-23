@@ -1,8 +1,8 @@
-import 'package:faith/comm/services/update_service.dart';
-import 'package:faith/comm/ui/fa_bottom_sheet/index.dart';
-import 'package:faith/comm/views/update_checker.dart';
 import 'package:faith/utils/status_bar_util.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import '../controller/home_controller.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -12,38 +12,18 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final DownloadService _downloadService = DownloadService.to;
+  late final HomeController _controller;
 
   @override
   void initState() {
     super.initState();
-    // 配置底部弹层行为
-    FaBottomSheetConfig.updateConfig(
-      allowDismissible: true,
-      allowDrag: true,
-      backdropOpacity: 0.5,
-      animationDuration: const Duration(milliseconds: 300),
-    );
-    // 在页面加载后检查更新状态
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkUpdateStatus();
-    });
+    _controller = Get.put(HomeController());
   }
 
-  // 检查更新状态并显示底部弹层
-  void _checkUpdateStatus() async {
-    if (_downloadService.needUpdate()) {
-      await FaBottomSheet.show(
-        showDragHandle: true,
-        backgroundColor: const Color.fromARGB(255, 228, 228, 228),
-        onDismiss: () {
-          if (_downloadService.downloadProgress.isEmpty) {
-            _downloadService.hideUpdateTip();
-          }
-        },
-        child: const UpdateChecker(),
-      );
-    }
+  @override
+  void dispose() {
+    Get.delete<HomeController>();
+    super.dispose();
   }
 
   @override
@@ -53,19 +33,7 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: const Color(0xFFE3F2FD), // 淡蓝色，主色调更明显
       extendBodyBehindAppBar: true,
       extendBody: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.system_update),
-            onPressed: () async {
-              await _downloadService.checkUpdate();
-              _checkUpdateStatus();
-            },
-          ),
-        ],
-      ),
+      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
       body: Stack(
         children: [
           // 背景装饰

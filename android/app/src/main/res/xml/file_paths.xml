@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- 允许共享 app 私有目录下的所有文件 -->
+    <external-path name="external" path="."/>
+</paths>
