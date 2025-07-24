@@ -72,8 +72,8 @@ Future<void> _initializeApp() async {
   Get.put<PackageInfo>(packageInfo);
   // 初始化下载器
   await FlutterDownloader.initialize();
-  // 检查更新
-  await Get.putAsync(() => UpdateService().init());
+  // 只put服务，不await检查更新
+  Get.put(UpdateService());
 
   // 初始化配置
   // 这里不需要显式调用 Config.instance，因为第一次访问时会自动初始化

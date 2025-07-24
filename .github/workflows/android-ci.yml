@@ -32,6 +32,13 @@ jobs:
         with:
           channel: stable
 
+      - name: 🔐 解码 keystore
+        run: |
+          echo $env:KEYSTORE_BASE64 | base64 -d > android/app/key.jks
+        shell: pwsh
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+
       # 3. 构建 APK
       - name: 📥 获取依赖 & 构建
         run: |
