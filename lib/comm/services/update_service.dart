@@ -8,7 +8,8 @@ class UpdateService extends GetxService {
   @override
   Future<UpdateService> init() async {
     latest.value = await AppUpdateTool.checkUpdate();
-    debugPrint('latest: ${latest.value}');
+    debugPrint('UpdateService 拉取线上版本结果: \n');
+    debugPrint(latest.value?.toString() ?? 'null');
     return this;
   }
 }

@@ -2,7 +2,6 @@ import 'dart:isolate';
 import 'dart:ui';
 
 import 'package:faith/utils/update_util.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:get/get.dart';
 
@@ -94,7 +93,7 @@ class UpdateController extends GetxController {
         return;
       }
       await AppUpdateTool.install(path);
-      await AppUpdateTool.cleanAfterInstall(path);
+      // TODO: 安装后暂不自动删除APK，后续可在合适时机清理
       Get.back(result: true); // 关闭弹窗
     } catch (e) {
       errorMsg.value = e.toString();
