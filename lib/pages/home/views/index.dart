@@ -1,6 +1,8 @@
+import 'package:faith/comm/services/update_service.dart';
 import 'package:faith/utils/status_bar_util.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../controller/home_controller.dart';
 
@@ -13,11 +15,23 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late final HomeController _controller;
+  String? _localVersion;
+  String? _remoteVersion;
 
   @override
   void initState() {
     super.initState();
     _controller = Get.put(HomeController());
+    _initVersions();
+  }
+
+  Future<void> _initVersions() async {
+    final info = await PackageInfo.fromPlatform();
+    setState(() {
+      _localVersion = info.version;
+      final remote = Get.find<UpdateService>().latest.value;
+      _remoteVersion = remote?.tag;
+    });
   }
 
   @override
@@ -66,6 +80,30 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                if (_localVersion != null || _remoteVersion != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Column(
+                      children: [
+                        if (_localVersion != null)
+                          Text(
+                            '本地版本号: $_localVersion',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        if (_remoteVersion != null)
+                          Text(
+                            '线上最新版本: $_remoteVersion',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black54,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 const Text(
                   '首页',
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
