@@ -8,7 +8,6 @@ import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:get/get.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 /// ================= 数据模型 =================
@@ -16,16 +15,18 @@ class RemoteVersion {
   final String tag;
   final String apkUrl;
   final String shaUrl;
+  final String? body; // 新增
 
   const RemoteVersion({
     required this.tag,
     required this.apkUrl,
     required this.shaUrl,
+    this.body,
   });
 
   @override
   String toString() {
-    return 'RemoteVersion(tag: $tag, apkUrl: $apkUrl, shaUrl: $shaUrl)';
+    return 'RemoteVersion(tag: $tag, apkUrl: $apkUrl, shaUrl: $shaUrl, body: $body)';
   }
 }
 
@@ -54,7 +55,13 @@ class AppUpdateTool {
                 (e) => e['name'] == 'faith-preview-$cleanVersion.apk.sha1',
               )['browser_download_url']
               as String;
-      return RemoteVersion(tag: tag, apkUrl: apkAsset, shaUrl: shaAsset);
+      final body = res.data['body'] as String?;
+      return RemoteVersion(
+        tag: tag,
+        apkUrl: apkAsset,
+        shaUrl: shaAsset,
+        body: body,
+      );
     } catch (_) {
       return null;
     }

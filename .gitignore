@@ -95,3 +95,6 @@ test/.python-version
 test/main.py
 test/pyproject.toml
 test/uv.lock
+
+# .claude
+.claude/

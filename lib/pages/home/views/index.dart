@@ -62,10 +62,20 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           // 主要内容
-          const Center(
-            child: Text(
-              '首页',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  '首页',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () => _controller.forceCheckUpdate(),
+                  child: const Text('手动检查更新'),
+                ),
+              ],
             ),
           ),
         ],

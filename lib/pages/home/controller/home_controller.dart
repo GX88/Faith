@@ -23,7 +23,7 @@ class HomeController extends GetxController {
 
     if (AppUpdateTool.isNewer(remote.tag)) {
       _alreadyShown.value = true;
-      Get.bottomSheet(UpdateChecker(remote), isScrollControlled: true);
+      await UpdateChecker.show(remote);
     }
   }
 
@@ -31,7 +31,7 @@ class HomeController extends GetxController {
   Future<void> forceCheckUpdate() async {
     final remote = await AppUpdateTool.checkUpdate();
     if (remote != null && AppUpdateTool.isNewer(remote.tag)) {
-      Get.bottomSheet(UpdateChecker(remote), isScrollControlled: true);
+      await UpdateChecker.show(remote);
     } else {
       Get.snackbar('已是最新', '当前已是最新版本');
     }
