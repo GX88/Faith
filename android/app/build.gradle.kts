@@ -20,30 +20,29 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "android.faith.com"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+      // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+      applicationId = "android.faith.com"
+      // You can update the following values to match your application needs.
+      // For more information, see: https://flutter.dev/to/review-gradle-config.
+      minSdk = flutter.minSdkVersion
+      targetSdk = flutter.targetSdkVersion
+      versionCode = flutter.versionCode
+      versionName = flutter.versionName
     }
 
     signingConfigs {
-        release {
-            storeFile = file("key.jks")
-            storePassword = "199907173030Bz"
-            keyAlias = "faith" // 你的key别名
-            keyPassword = "199907173030Bz"
-        }
+      create("release") {
+        storeFile = file("key.jks")
+        storePassword = "199907173030Bz"
+        keyAlias = "faith" // 你的key别名
+        keyPassword = "199907173030Bz"
+      }
     }
 
     buildTypes {
-        release {
-            signingConfig = signingConfigs.getByName("release")
-            // Signing with the debug keys for now, so `flutter run --release` works.
-        }
+      getByName("release") {
+        signingConfig = signingConfigs.getByName("release")
+      }
     }
 }
 
