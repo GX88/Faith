@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:faith/comm/services/update_service.dart';
+import 'package:faith/comm/update/update_service.dart';
 import 'package:faith/config/config.default.dart';
 import 'package:faith/router/index.dart';
 import 'package:get/get.dart';
@@ -34,8 +34,11 @@ class SkipController extends GetxController {
   /// 跳转参数
   final Map<String, dynamic>? targetArguments;
 
-  Future<void>? _updateFuture;
+  // Future<void>? _updateFuture; // 移除未使用的字段
   bool _updateFinished = false;
+
+  /// 跳转是否已执行，防止重复跳转
+  bool _hasSkipped = false;
 
   SkipController({
     this.initialCountdown = 5,
@@ -69,7 +72,8 @@ class SkipController extends GetxController {
 
   void _checkUpdateWithTimeout() {
     final duration = Duration(seconds: initialCountdown);
-    _updateFuture = Get.find<UpdateService>().init().then((_) {
+    // 直接 fire-and-forget，不保存 Future
+    Get.find<UpdateService>().init().then((_) {
       _updateFinished = true;
     });
     // 倒计时结束时，若还未完成则取消（实际Dio无法强制cancel，但可忽略结果）
@@ -94,6 +98,8 @@ class SkipController extends GetxController {
 
   /// 跳转到目标页面
   void skipToMain() async {
+    if (_hasSkipped) return;
+    _hasSkipped = true;
     _timer?.cancel();
 
     // 执行跳转前回调

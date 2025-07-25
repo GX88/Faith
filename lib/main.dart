@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:faith/comm/services/update_service.dart';
+import 'package:faith/comm/update/update_service.dart';
 import 'package:faith/config/config.default.dart';
 import 'package:faith/router/index.dart';
 import 'package:flutter/material.dart';
@@ -65,21 +65,12 @@ Future<void> main() async {
 }
 
 Future<void> _initializeApp() async {
-  // 确保Flutter绑定初始化
-  WidgetsFlutterBinding.ensureInitialized();
-  // 注入 PackageInfo
-  final packageInfo = await PackageInfo.fromPlatform();
-  Get.put<PackageInfo>(packageInfo);
-  // 初始化下载器
-  await FlutterDownloader.initialize();
-  // 只put服务，不await检查更新
-  Get.put(UpdateService());
+  WidgetsFlutterBinding.ensureInitialized(); // 确保Flutter绑定初始化
+  final packageInfo = await PackageInfo.fromPlatform(); // 获取 PackageInfo
+  await FlutterDownloader.initialize(); // 初始化下载器
 
-  // 初始化配置
-  // 这里不需要显式调用 Config.instance，因为第一次访问时会自动初始化
-  // 但我们可以提前访问一次，确保配置在应用启动时就已经准备好
-  debugPrint('当前环境: ${Config.isProd ? '生产环境' : '开发环境'}');
-  debugPrint('API地址: ${Config.instance.apiBaseUrl}');
+  Get.put<PackageInfo>(packageInfo); // 注入 PackageInfo
+  Get.put(UpdateService()); // 注入 UpdateService
 }
 
 class MainAppPage extends StatelessWidget {

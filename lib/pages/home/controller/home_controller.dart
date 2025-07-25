@@ -1,6 +1,6 @@
 // lib/controllers/home_controller.dart
-import 'package:faith/comm/services/update_service.dart';
-import 'package:faith/comm/views/update_checker.dart';
+import 'package:faith/comm/update/update_service.dart';
+import 'package:faith/comm/update/update_views.dart';
 import 'package:faith/utils/update_util.dart';
 import 'package:get/get.dart';
 
@@ -36,4 +36,5 @@ class HomeController extends GetxController {
       Get.snackbar('已是最新', '当前已是最新版本');
     }
   }
+
 }

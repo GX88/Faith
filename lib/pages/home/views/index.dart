@@ -1,4 +1,4 @@
-import 'package:faith/comm/services/update_service.dart';
+import 'package:faith/comm/update/update_service.dart';
 import 'package:faith/utils/status_bar_util.dart';
 import 'package:faith/utils/update_util.dart';
 import 'package:flutter/material.dart';

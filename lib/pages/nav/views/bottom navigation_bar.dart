@@ -178,7 +178,9 @@ class _BottomNavigationBarPageState extends State<BottomNavigationBarPage>
                   final enterOffset = isForward
                       ? Offset(1.0, 0.0)
                       : Offset(-1.0, 0.0);
-                  final exitOffset = isForward ? Offset(-1.0, 0.0) : Offset(1.0, 0.0);
+                  final exitOffset = isForward
+                      ? Offset(-1.0, 0.0)
+                      : Offset(1.0, 0.0);
                   return SlideTransition(
                     position: animation.drive(
                       Tween<Offset>(
@@ -208,104 +210,111 @@ class _BottomNavigationBarPageState extends State<BottomNavigationBarPage>
               left: 16,
               right: 16,
               bottom: 20,
-              child: Container(
-                height: 60,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.95),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Theme(
-                  data: Theme.of(context).copyWith(
-                    splashColor: Colors.transparent,
-                    highlightColor: Colors.transparent,
-                    splashFactory: NoSplash.splashFactory,
-                  ),
-                  child: ClipRRect(
+              child: SafeArea(
+                top: false,
+                child: Container(
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.95),
                     borderRadius: BorderRadius.circular(20),
-                    child: BottomNavigationBar(
-                      currentIndex: controller.selectedIndex.value,
-                      onTap: _onTabTapped,
-                      type: BottomNavigationBarType.fixed,
-                      selectedItemColor: Colors.black,
-                      unselectedItemColor: Colors.grey,
-                      elevation: 0,
-                      backgroundColor: Colors.transparent,
-                      items: [
-                        BottomNavigationBarItem(
-                          icon: Padding(
-                            padding: EdgeInsets.only(bottom: 4),
-                            child: Lottie.asset(
-                              'lib/assets/bottom_navigation/home.json',
-                              width: 26,
-                              height: 26,
-                              controller: lottieController,
-                              onLoaded: (composition) {
-                                lottieController.duration = composition.duration;
-                              },
-                              repeat: false,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 10,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Theme(
+                    data: Theme.of(context).copyWith(
+                      splashColor: Colors.transparent,
+                      highlightColor: Colors.transparent,
+                      splashFactory: NoSplash.splashFactory,
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: BottomNavigationBar(
+                        currentIndex: controller.selectedIndex.value,
+                        onTap: _onTabTapped,
+                        type: BottomNavigationBarType.fixed,
+                        selectedItemColor: Colors.black,
+                        unselectedItemColor: Colors.grey,
+                        elevation: 0,
+                        backgroundColor: Colors.transparent,
+                        items: [
+                          BottomNavigationBarItem(
+                            icon: Padding(
+                              padding: EdgeInsets.only(bottom: 4),
+                              child: Lottie.asset(
+                                'lib/assets/bottom_navigation/home.json',
+                                width: 26,
+                                height: 26,
+                                controller: lottieController,
+                                onLoaded: (composition) {
+                                  lottieController.duration =
+                                      composition.duration;
+                                },
+                                repeat: false,
+                              ),
                             ),
+                            label: '首页',
                           ),
-                          label: '首页',
-                        ),
-                        BottomNavigationBarItem(
-                          icon: Padding(
-                            padding: EdgeInsets.only(bottom: 4),
-                            child: Lottie.asset(
-                              'lib/assets/bottom_navigation/explore.json',
-                              width: 26,
-                              height: 26,
-                              controller: exploreLottieController,
-                              onLoaded: (composition) {
-                                exploreLottieController.duration = composition.duration;
-                              },
-                              repeat: false,
+                          BottomNavigationBarItem(
+                            icon: Padding(
+                              padding: EdgeInsets.only(bottom: 4),
+                              child: Lottie.asset(
+                                'lib/assets/bottom_navigation/explore.json',
+                                width: 26,
+                                height: 26,
+                                controller: exploreLottieController,
+                                onLoaded: (composition) {
+                                  exploreLottieController.duration =
+                                      composition.duration;
+                                },
+                                repeat: false,
+                              ),
                             ),
+                            label: '探索',
                           ),
-                          label: '探索',
-                        ),
-                        BottomNavigationBarItem(
-                          icon: Padding(
-                            padding: EdgeInsets.only(bottom: 4),
-                            child: Lottie.asset(
-                              'lib/assets/bottom_navigation/tool.json',
-                              width: 26,
-                              height: 26,
-                              controller: toolLottieController,
-                              onLoaded: (composition) {
-                                toolLottieController.duration = composition.duration;
-                              },
-                              repeat: false,
+                          BottomNavigationBarItem(
+                            icon: Padding(
+                              padding: EdgeInsets.only(bottom: 4),
+                              child: Lottie.asset(
+                                'lib/assets/bottom_navigation/tool.json',
+                                width: 26,
+                                height: 26,
+                                controller: toolLottieController,
+                                onLoaded: (composition) {
+                                  toolLottieController.duration =
+                                      composition.duration;
+                                },
+                                repeat: false,
+                              ),
                             ),
+                            label: '工具',
                           ),
-                          label: '工具',
-                        ),
-                        BottomNavigationBarItem(
-                          icon: Padding(
-                            padding: EdgeInsets.only(bottom: 4),
-                            child: Lottie.asset(
-                              'lib/assets/bottom_navigation/setting.json',
-                              width: 26,
-                              height: 26,
-                              controller: settingLottieController,
-                              onLoaded: (composition) {
-                                settingLottieController.duration = composition.duration;
-                              },
-                              repeat: false,
+                          BottomNavigationBarItem(
+                            icon: Padding(
+                              padding: EdgeInsets.only(bottom: 4),
+                              child: Lottie.asset(
+                                'lib/assets/bottom_navigation/setting.json',
+                                width: 26,
+                                height: 26,
+                                controller: settingLottieController,
+                                onLoaded: (composition) {
+                                  settingLottieController.duration =
+                                      composition.duration;
+                                },
+                                repeat: false,
+                              ),
                             ),
+                            label: '设置',
                           ),
-                          label: '设置',
-                        ),
-                      ],
-                      selectedFontSize: 10,
-                      unselectedFontSize: 10,
-                      showUnselectedLabels: true,
+                        ],
+                        selectedFontSize: 10,
+                        unselectedFontSize: 10,
+                        showUnselectedLabels: true,
+                      ),
                     ),
                   ),
                 ),

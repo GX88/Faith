@@ -8,6 +8,7 @@ import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:get/get.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 /// ================= 数据模型 =================
@@ -81,42 +82,49 @@ class AppUpdateTool {
 
   /* ---------- 3. 下载（断点续传） ---------- */
   static Future<String?> download(RemoteVersion rv) async {
-    final ok = await _requestPermissions();
-    if (!ok) return null;
-
-    // 使用Download目录
-    final downloadDir = Directory('/storage/emulated/0/Download/Faith/updates');
-    if (!await downloadDir.exists()) {
-      await downloadDir.create(recursive: true);
-    }
-    final dir = downloadDir.path;
-    final fileName = 'faith-${rv.tag}.apk';
-
-    // 已存在任务则继续，否则新建
-    final tasks = await FlutterDownloader.loadTasks();
-    DownloadTask? existed;
     try {
-      existed = tasks?.firstWhere(
-        (t) => t.url == rv.apkUrl && t.savedDir == dir,
+      final ok = await _requestPermissions();
+      if (!ok) throw Exception('权限不足');
+
+      // 使用外部私有目录下的updates子文件夹
+      final baseDir = (await getExternalStorageDirectory())!.path;
+      final updatesDir = Directory('$baseDir/updates');
+      if (!await updatesDir.exists()) {
+        await updatesDir.create(recursive: true);
+      }
+      final dir = updatesDir.path;
+
+      final fileName = 'faith-${rv.tag}.apk';
+
+      // 已存在任务则继续，否则新建
+      final tasks = await FlutterDownloader.loadTasks();
+      DownloadTask? existed;
+      try {
+        existed = tasks?.firstWhere(
+          (t) => t.url == rv.apkUrl && t.savedDir == dir,
+        );
+      } catch (_) {
+        existed = null;
+      }
+
+      if (existed != null &&
+          (existed.status == DownloadTaskStatus.paused ||
+              existed.status == DownloadTaskStatus.failed)) {
+        await FlutterDownloader.resume(taskId: existed.taskId);
+        return existed.taskId;
+      }
+
+      return await FlutterDownloader.enqueue(
+        url: rv.apkUrl,
+        savedDir: dir,
+        fileName: fileName,
+        showNotification: true,
+        openFileFromNotification: false,
       );
-    } catch (_) {
-      existed = null;
+    } catch (e) {
+      debugPrint('下载失败: $e');
+      return null;
     }
-
-    if (existed != null &&
-        (existed.status == DownloadTaskStatus.paused ||
-            existed.status == DownloadTaskStatus.failed)) {
-      await FlutterDownloader.resume(taskId: existed.taskId);
-      return existed.taskId;
-    }
-
-    return await FlutterDownloader.enqueue(
-      url: rv.apkUrl,
-      savedDir: dir,
-      fileName: fileName,
-      showNotification: true,
-      openFileFromNotification: false,
-    );
   }
 
   /* ---------- 4. 校验 SHA-1 ---------- */
