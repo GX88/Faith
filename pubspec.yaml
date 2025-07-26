@@ -1,6 +1,5 @@
 name: faith
 description: "A new Flutter project."
-publish_to: 'none' # Remove this line if you wish to publish to pub.
 version: 1.0.1+1
 
 environment:
@@ -26,13 +25,13 @@ dependencies:
 
   pull_to_refresh: ^2.0.0 # 下拉刷新
 
-  flutter_svg: ^2.2.0  # 图标
+  flutter_svg: ^2.2.0 # 图标
 
   local_auth: ^2.1.8 # 生物识别
   local_auth_android: ^1.0.36
 
   lottie: ^3.3.1 # Lottie动画
-  
+
   animations: ^2.0.11 # 页面切换动画
 
   path_provider: ^2.1.5 # 获取文件路径
@@ -49,9 +48,7 @@ dev_dependencies:
 
   flutter_lints: ^5.0.0
 
-
 flutter:
-
   uses-material-design: true
 
   assets:

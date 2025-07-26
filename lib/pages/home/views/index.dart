@@ -92,6 +92,22 @@ class _HomePageState extends State<HomePage> {
                   onPressed: () => _controller.forceCheckUpdate(),
                   child: const Text('手动检查更新'),
                 ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () async {
+                    final result = await AppUpdateTool.cleanUpdatesFolder();
+                    if (result) {
+                      Get.snackbar('清理成功', 'Updates文件夹已删除');
+                    } else {
+                      Get.snackbar('清理提示', 'Updates文件夹不存在或清理失败');
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('清理更新缓存'),
+                ),
               ],
             ),
           ),

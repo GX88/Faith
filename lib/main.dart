@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:faith/comm/update/update_service.dart';
+import 'package:faith/comm/update/update_views.dart';
 import 'package:faith/config/config.default.dart';
 import 'package:faith/router/index.dart';
 import 'package:flutter/material.dart';
@@ -68,6 +69,7 @@ Future<void> _initializeApp() async {
   WidgetsFlutterBinding.ensureInitialized(); // 确保Flutter绑定初始化
   final packageInfo = await PackageInfo.fromPlatform(); // 获取 PackageInfo
   await FlutterDownloader.initialize(); // 初始化下载器
+  FlutterDownloader.registerCallback(downloadCallback); // 注册全局下载回调
 
   Get.put<PackageInfo>(packageInfo); // 注入 PackageInfo
   Get.put(UpdateService()); // 注入 UpdateService

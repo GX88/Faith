@@ -32,7 +32,27 @@ class RemoteVersion {
 }
 
 /// ================= 对外工具类 =================
-class AppUpdateTool {
+class AppUpdateTool {  
+  /* ---------- 清理updates文件夹 ---------- */
+  static Future<bool> cleanUpdatesFolder() async {
+    try {
+      final baseDir = (await getExternalStorageDirectory())!.path;
+      final updatesDir = Directory('$baseDir/updates');
+      
+      if (await updatesDir.exists()) {
+        // 删除文件夹及其内容
+        await updatesDir.delete(recursive: true);
+        debugPrint('Updates文件夹已清理');
+        return true;
+      } else {
+        debugPrint('Updates文件夹不存在');
+        return false;
+      }
+    } catch (e) {
+      debugPrint('清理Updates文件夹失败: $e');
+      return false;
+    }
+  }
   /* ---------- 1. 检查更新 ---------- */
   static Future<RemoteVersion?> checkUpdate() async {
     final owner = Config.instance.githubRepoOwner;
@@ -95,32 +115,83 @@ class AppUpdateTool {
       final dir = updatesDir.path;
 
       final fileName = 'faith-${rv.tag}.apk';
+      final filePath = '$dir/$fileName';
+      
+      // 检查本地文件是否存在且有效
+      final localFile = File(filePath);
+      if (await localFile.exists()) {
+        // 验证SHA1
+        final isValid = await verifySha(filePath, rv.shaUrl);
+        if (isValid) {
+          // 文件有效，返回特殊taskId
+          return 'EXISTING_FILE_${rv.tag}';
+        } else {
+          // 文件无效，删除
+          await localFile.delete();
+        }
+      }
 
-      // 已存在任务则继续，否则新建
+      // 检查是否有现有任务
       final tasks = await FlutterDownloader.loadTasks();
-      DownloadTask? existed;
+      DownloadTask? existedTask;
       try {
-        existed = tasks?.firstWhere(
+        existedTask = tasks?.firstWhere(
           (t) => t.url == rv.apkUrl && t.savedDir == dir,
         );
       } catch (_) {
-        existed = null;
+        existedTask = null;
       }
 
-      if (existed != null &&
-          (existed.status == DownloadTaskStatus.paused ||
-              existed.status == DownloadTaskStatus.failed)) {
-        await FlutterDownloader.resume(taskId: existed.taskId);
-        return existed.taskId;
+      // 处理现有任务
+      if (existedTask != null) {
+        debugPrint('找到现有任务: ${existedTask.taskId}, 状态: ${existedTask.status}');
+        
+        // 如果任务已完成，检查文件是否存在且有效
+        if (existedTask.status == DownloadTaskStatus.complete) {
+          final taskFilePath = '${existedTask.savedDir}/${existedTask.filename}';
+          final taskFile = File(taskFilePath);
+          
+          if (await taskFile.exists()) {
+            final isValid = await verifySha(taskFilePath, rv.shaUrl);
+            if (isValid) {
+              // 文件有效，返回taskId
+              return existedTask.taskId;
+            } else {
+              // 文件无效，删除任务和文件
+              await FlutterDownloader.remove(taskId: existedTask.taskId, shouldDeleteContent: true);
+            }
+          } else {
+            // 文件不存在，删除任务
+            await FlutterDownloader.remove(taskId: existedTask.taskId, shouldDeleteContent: true);
+          }
+        } 
+        // 如果任务暂停或失败，恢复下载
+        else if (existedTask.status == DownloadTaskStatus.paused || 
+                 existedTask.status == DownloadTaskStatus.failed) {
+          await FlutterDownloader.resume(taskId: existedTask.taskId);
+          return existedTask.taskId;
+        }
+        // 如果任务正在运行或排队中，返回taskId
+        else if (existedTask.status == DownloadTaskStatus.running || 
+                 existedTask.status == DownloadTaskStatus.enqueued) {
+          return existedTask.taskId;
+        }
+        // 其他状态，删除任务重新下载
+        else {
+          await FlutterDownloader.remove(taskId: existedTask.taskId, shouldDeleteContent: true);
+        }
       }
 
-      return await FlutterDownloader.enqueue(
+      // 创建新任务
+      final newTaskId = await FlutterDownloader.enqueue(
         url: rv.apkUrl,
         savedDir: dir,
         fileName: fileName,
         showNotification: true,
         openFileFromNotification: false,
       );
+      debugPrint('创建新任务: $newTaskId');
+      return newTaskId;
     } catch (e) {
       debugPrint('下载失败: $e');
       return null;

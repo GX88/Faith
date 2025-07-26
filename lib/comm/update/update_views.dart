@@ -55,8 +55,7 @@ class _UpdateCheckerState extends State<UpdateChecker> {
   @override
   void initState() {
     super.initState();
-    // 监听下载进度
-    FlutterDownloader.registerCallback(downloadCallback);
+    // 监听下载进度（全局回调已在main.dart中注册）
     _progressSub = downloadProgressStream.stream.listen((event) {
       if (event.taskId == taskId && mounted) {
         setState(() {
@@ -97,7 +96,7 @@ class _UpdateCheckerState extends State<UpdateChecker> {
     try {
       String? path;
 
-      if (taskId == 'EXISTING_FILE') {
+      if (taskId == 'EXISTING_FILE' || taskId.startsWith('EXISTING_FILE_')) {
         // 文件已存在，直接构建路径
         final baseDir = (await getExternalStorageDirectory())!.path;
         final updatesDir = Directory('$baseDir/updates');
@@ -251,12 +250,12 @@ class _UpdateCheckerState extends State<UpdateChecker> {
             ),
           )
         else if (status == DownloadTaskStatus.complete ||
-            taskId == 'EXISTING_FILE')
+            taskId == 'EXISTING_FILE' || taskId.startsWith('EXISTING_FILE_'))
           Padding(
             padding: const EdgeInsets.only(top: 4, bottom: 12),
             child: FaButton(
               onPressed: onInstall,
-              text: taskId == 'EXISTING_FILE' ? '文件已存在，立即安装' : '立即安装',
+              text: taskId == 'EXISTING_FILE' || taskId.startsWith('EXISTING_FILE_') ? '文件已存在，立即安装' : '立即安装',
               icon: Icon(
                 Icons.install_mobile_rounded,
                 color: Colors.white,
