@@ -171,11 +171,17 @@ class AppUpdateTool {
             );
           }
         }
-        // 如果任务暂停或失败，恢复下载
-        else if (existedTask.status == DownloadTaskStatus.paused ||
-            existedTask.status == DownloadTaskStatus.failed) {
+        // 如果任务暂停，恢复下载
+        else if (existedTask.status == DownloadTaskStatus.paused) {
           await FlutterDownloader.resume(taskId: existedTask.taskId);
           return existedTask.taskId;
+        }
+        // 如果任务失败，删除后重新创建
+        else if (existedTask.status == DownloadTaskStatus.failed) {
+          await FlutterDownloader.remove(
+            taskId: existedTask.taskId,
+            shouldDeleteContent: true,
+          );
         }
         // 如果任务正在运行或排队中，返回taskId
         else if (existedTask.status == DownloadTaskStatus.running ||

@@ -124,6 +124,16 @@ class _UpdateCheckerState extends State<UpdateChecker> {
   Future<void> onUpdate() async {
     try {
       debugPrint('开始下载更新...');
+      
+      // 如果已有失败任务，先清理
+      if (taskId.isNotEmpty && status == DownloadTaskStatus.failed) {
+        debugPrint('清理失败任务: $taskId');
+        await FlutterDownloader.remove(
+          taskId: taskId,
+          shouldDeleteContent: true,
+        );
+      }
+      
       final id = await AppUpdateTool.download(widget.remote);
       debugPrint('下载任务创建结果: $id');
       
@@ -135,7 +145,7 @@ class _UpdateCheckerState extends State<UpdateChecker> {
           // 如果是已存在的文件，状态设为完成
           if (id == 'EXISTING_FILE' || id.startsWith('EXISTING_FILE_')) {
             status = DownloadTaskStatus.complete;
-          } 
+          }
           // 如果是新任务，初始状态设为排队中
           else {
             status = DownloadTaskStatus.enqueued;
@@ -146,13 +156,19 @@ class _UpdateCheckerState extends State<UpdateChecker> {
         debugPrint('下载任务状态已更新: taskId=$taskId, status=$status');
       } else {
         setState(() {
-          errorMsg = '下载任务创建失败，可能是权限或网络问题';
+          errorMsg = '下载任务创建失败，请检查网络连接和存储权限';
         });
       }
     } catch (e) {
       debugPrint('下载异常: $e');
       setState(() {
-        errorMsg = '下载异常: $e';
+        if (e.toString().contains('SocketException')) {
+          errorMsg = '网络连接失败，请检查网络后重试';
+        } else if (e.toString().contains('Permission')) {
+          errorMsg = '权限不足，请授予存储权限后重试';
+        } else {
+          errorMsg = '下载失败: ${e.toString()}';
+        }
       });
     }
   }
