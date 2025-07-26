@@ -17,8 +17,8 @@ class Config {
   String get updateApkFileName => '';
 
   // Github 更新配置
-  String get githubRepoOwner => 'GX88';
-  String get githubRepoName => 'faith-release';
+  String get appUpdateUrl =>
+      'https://api.github.com/repos/GX88/faith-release/releases/latest';
 
   // 单例实现
   static Config? _instance;

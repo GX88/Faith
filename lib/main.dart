@@ -13,6 +13,9 @@ import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 
+// 导入下载回调函数
+import 'comm/update/update_views.dart' show downloadCallback;
+
 Future<void> main() async {
   await _initializeApp();
 
@@ -68,9 +71,18 @@ Future<void> main() async {
 Future<void> _initializeApp() async {
   WidgetsFlutterBinding.ensureInitialized(); // 确保Flutter绑定初始化
   final packageInfo = await PackageInfo.fromPlatform(); // 获取 PackageInfo
-  await FlutterDownloader.initialize(); // 初始化下载器
-  FlutterDownloader.registerCallback(downloadCallback); // 注册全局下载回调
-
+  
+  // 初始化下载器
+  debugPrint('初始化下载器');
+  await FlutterDownloader.initialize(debug: true); // 启用调试模式
+  
+  // 注册全局下载回调
+  // 注意：回调必须是静态或顶级函数
+  debugPrint('注册下载回调函数');
+  FlutterDownloader.registerCallback(downloadCallback);
+  
+  debugPrint('下载器初始化和回调注册完成');
+  
   Get.put<PackageInfo>(packageInfo); // 注入 PackageInfo
   Get.put(UpdateService()); // 注入 UpdateService
 }

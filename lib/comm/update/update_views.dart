@@ -10,6 +10,9 @@ import '../../utils/update_util.dart';
 import '../ui/fa_bottom_sheet/index.dart';
 import '../ui/fa_button/index.dart';
 
+import 'dart:isolate';
+import 'dart:ui';
+
 // 下载进度事件类和全局 stream
 class DownloadProgressEvent {
   final String taskId;
@@ -21,10 +24,24 @@ class DownloadProgressEvent {
 final StreamController<DownloadProgressEvent> downloadProgressStream =
     StreamController.broadcast();
 
+// 用于隔离通信的端口名称
+const String _isolateName = 'downloader_isolate';
+
 // 顶级公有回调函数，供 FlutterDownloader native 调用
 @pragma('vm:entry-point')
 void downloadCallback(String id, int status, int progress) {
-  downloadProgressStream.add(DownloadProgressEvent(id, status, progress));
+  debugPrint('下载回调(后台隔离): taskId=$id, status=$status, progress=$progress');
+  
+  // 查找主隔离的发送端口
+  final SendPort? sendPort = IsolateNameServer.lookupPortByName(_isolateName);
+  
+  if (sendPort != null) {
+    // 发送数据到主隔离
+    sendPort.send([id, status, progress]);
+    debugPrint('下载回调: 已发送到主隔离');
+  } else {
+    debugPrint('下载回调: 找不到主隔离端口');
+  }
 }
 
 class UpdateChecker extends StatefulWidget {
@@ -52,40 +69,88 @@ class _UpdateCheckerState extends State<UpdateChecker> {
   String errorMsg = '';
   StreamSubscription? _progressSub;
 
+  // 接收端口，用于接收后台隔离的消息
+  ReceivePort? _port;
+  
   @override
   void initState() {
     super.initState();
-    // 监听下载进度（全局回调已在main.dart中注册）
-    _progressSub = downloadProgressStream.stream.listen((event) {
-      if (event.taskId == taskId && mounted) {
+    
+    // 创建接收端口并注册到隔离名称服务
+    _port = ReceivePort();
+    IsolateNameServer.registerPortWithName(_port!.sendPort, _isolateName);
+    
+    // 监听接收端口，接收后台隔离发送的下载进度事件
+    _port!.listen((dynamic data) {
+      // 解析数据
+      String id = data[0];
+      int statusValue = data[1];
+      int progressValue = data[2];
+      
+      debugPrint('主隔离收到下载进度: taskId=$id, status=$statusValue, progress=$progressValue');
+      debugPrint('当前taskId: $taskId, 是否匹配: ${id == taskId}');
+      
+      if (id == taskId && mounted) {
+        final newStatus = DownloadTaskStatus.values[statusValue];
+        debugPrint('更新状态: $status -> $newStatus, 进度: $progress -> $progressValue');
+        
         setState(() {
-          status = DownloadTaskStatus.values[event.status];
-          progress = event.progress;
+          status = newStatus;
+          progress = progressValue;
         });
       }
+    });
+    
+    // 保留原有的stream监听，以兼容旧代码
+    _progressSub = downloadProgressStream.stream.listen((event) {
+      debugPrint('收到stream事件: taskId=${event.taskId}, status=${event.status}, progress=${event.progress}');
     });
   }
 
   @override
   void dispose() {
+    // 取消流订阅
     _progressSub?.cancel();
+    
+    // 关闭接收端口
+    _port?.close();
+    
+    // 从隔离名称服务中移除端口映射
+    IsolateNameServer.removePortNameMapping(_isolateName);
+    
     super.dispose();
   }
 
   Future<void> onUpdate() async {
     try {
+      debugPrint('开始下载更新...');
       final id = await AppUpdateTool.download(widget.remote);
+      debugPrint('下载任务创建结果: $id');
+      
       if (id != null) {
         setState(() {
           taskId = id;
           errorMsg = '';
+          
+          // 如果是已存在的文件，状态设为完成
+          if (id == 'EXISTING_FILE' || id.startsWith('EXISTING_FILE_')) {
+            status = DownloadTaskStatus.complete;
+          } 
+          // 如果是新任务，初始状态设为排队中
+          else {
+            status = DownloadTaskStatus.enqueued;
+            progress = 0;
+          }
         });
+        
+        debugPrint('下载任务状态已更新: taskId=$taskId, status=$status');
       } else {
         setState(() {
           errorMsg = '下载任务创建失败，可能是权限或网络问题';
         });
       }
     } catch (e) {
+      debugPrint('下载异常: $e');
       setState(() {
         errorMsg = '下载异常: $e';
       });
@@ -140,6 +205,10 @@ class _UpdateCheckerState extends State<UpdateChecker> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    
+    // 添加调试信息
+    debugPrint('构建UI: taskId=$taskId, status=$status, progress=$progress');
+    
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -219,102 +288,97 @@ class _UpdateCheckerState extends State<UpdateChecker> {
             ),
           ),
         // 下载进度与按钮
-        if (taskId.isEmpty)
-          // 主按钮
-          SizedBox(
-            width: double.infinity,
-            child: FaButton(
-              onPressed: onUpdate,
-              text: '立即更新',
-              size: FaButtonSize.large,
-              borderRadius: 12,
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: Colors.white,
-            ),
-          )
-        else if (status == DownloadTaskStatus.enqueued ||
-            status == DownloadTaskStatus.running)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Column(
-              children: [
-                LinearProgressIndicator(value: progress / 100),
-                const SizedBox(height: 6),
-                Text(
-                  status == DownloadTaskStatus.enqueued
-                      ? '准备下载...'
-                      : '$progress%',
-                  style: const TextStyle(fontSize: 13, color: Colors.black54),
+        Builder(builder: (context) {
+          // 添加调试信息
+          debugPrint('构建下载按钮: taskId=$taskId, status=$status, progress=$progress');
+          
+          // 根据不同状态显示不同UI
+          if (taskId.isEmpty) {
+            // 主按钮 - 未开始下载
+            return SizedBox(
+              width: double.infinity,
+              child: FaButton(
+                onPressed: onUpdate,
+                text: '立即更新',
+                size: FaButtonSize.large,
+                borderRadius: 12,
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: Colors.white,
+              ),
+            );
+          } else if (status == DownloadTaskStatus.enqueued || status == DownloadTaskStatus.running) {
+            // 下载中 - 显示进度条
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Column(
+                children: [
+                  LinearProgressIndicator(value: progress / 100),
+                  const SizedBox(height: 6),
+                  Text(
+                    status == DownloadTaskStatus.enqueued
+                        ? '准备下载...'
+                        : '$progress%',
+                    style: const TextStyle(fontSize: 13, color: Colors.black54),
+                  ),
+                ],
+              ),
+            );
+          } else if (status == DownloadTaskStatus.complete || 
+                     taskId == 'EXISTING_FILE' || 
+                     taskId.startsWith('EXISTING_FILE_')) {
+            // 下载完成 - 显示安装按钮
+            return Padding(
+              padding: const EdgeInsets.only(top: 4, bottom: 12),
+              child: FaButton(
+                onPressed: onInstall,
+                text: taskId == 'EXISTING_FILE' || taskId.startsWith('EXISTING_FILE_')
+                    ? '文件已存在，立即安装'
+                    : '立即安装',
+                icon: Icon(
+                  Icons.install_mobile_rounded,
+                  color: Colors.white,
+                  size: 22,
                 ),
-              ],
-            ),
-          )
-        else if (status == DownloadTaskStatus.complete ||
-            taskId == 'EXISTING_FILE' || taskId.startsWith('EXISTING_FILE_'))
-          Padding(
-            padding: const EdgeInsets.only(top: 4, bottom: 12),
-            child: FaButton(
-              onPressed: onInstall,
-              text: taskId == 'EXISTING_FILE' || taskId.startsWith('EXISTING_FILE_') ? '文件已存在，立即安装' : '立即安装',
-              icon: Icon(
-                Icons.install_mobile_rounded,
-                color: Colors.white,
-                size: 22,
+                block: true,
+                size: FaButtonSize.large,
+                borderRadius: 12,
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: Colors.white,
               ),
-              block: true,
-              size: FaButtonSize.large,
-              borderRadius: 12,
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: Colors.white,
-            ),
-          )
-        else if (status == DownloadTaskStatus.failed ||
-            status == DownloadTaskStatus.undefined)
-          Padding(
-            padding: const EdgeInsets.only(top: 4, bottom: 12),
-            child: FaButton(
-              onPressed: onUpdate,
-              text: '重试',
-              icon: Icon(
-                Icons.refresh_rounded,
-                color: theme.colorScheme.primary,
-                size: 22,
+            );
+          } else if (status == DownloadTaskStatus.failed || status == DownloadTaskStatus.undefined) {
+            // 下载失败 - 显示重试按钮
+            return Padding(
+              padding: const EdgeInsets.only(top: 4, bottom: 12),
+              child: FaButton(
+                onPressed: onUpdate,
+                text: '重试',
+                icon: Icon(
+                  Icons.refresh_rounded,
+                  color: theme.colorScheme.primary,
+                  size: 22,
+                ),
+                block: true,
+                size: FaButtonSize.large,
+                borderRadius: 12,
+                type: FaButtonType.outline,
               ),
-              block: true,
-              size: FaButtonSize.large,
-              borderRadius: 12,
-              type: FaButtonType.outline,
-            ),
-          )
-        else if (status == DownloadTaskStatus.failed)
-          Padding(
-            padding: const EdgeInsets.only(top: 4, bottom: 12),
-            child: FaButton(
-              onPressed: onUpdate,
-              text: '重试',
-              icon: Icon(
-                Icons.refresh_rounded,
-                color: theme.colorScheme.primary,
-                size: 22,
+            );
+          } else {
+            // 其他状态 - 显示更新按钮
+            return SizedBox(
+              width: double.infinity,
+              child: FaButton(
+                onPressed: onUpdate,
+                text: '立即更新',
+                size: FaButtonSize.large,
+                borderRadius: 12,
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: Colors.white,
               ),
-              block: true,
-              size: FaButtonSize.large,
-              borderRadius: 12,
-              type: FaButtonType.outline,
-            ),
-          )
-        else
-          SizedBox(
-            width: double.infinity,
-            child: FaButton(
-              onPressed: onUpdate,
-              text: '立即更新',
-              size: FaButtonSize.large,
-              borderRadius: 12,
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: Colors.white,
-            ),
-          ),
+            );
+          }
+        }),
         // “以后再说”按钮保持灰色、block、间距
         Center(
           child: GestureDetector(
