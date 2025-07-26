@@ -1,28 +1,21 @@
 import 'dart:async';
-import 'dart:io';
+import 'dart:isolate';
+import 'dart:ui';
+
+// ...
 
 import 'package:flutter/material.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:get/get.dart';
-import 'package:path_provider/path_provider.dart';
+
+// ...
 
 import '../../utils/update_util.dart';
 import '../ui/fa_bottom_sheet/index.dart';
 import '../ui/fa_button/index.dart';
+import 'progress_button.dart';
 
-import 'dart:isolate';
-import 'dart:ui';
-
-// 下载进度事件类和全局 stream
-class DownloadProgressEvent {
-  final String taskId;
-  final int status;
-  final int progress;
-  DownloadProgressEvent(this.taskId, this.status, this.progress);
-}
-
-final StreamController<DownloadProgressEvent> downloadProgressStream =
-    StreamController.broadcast();
+// ...
 
 // 用于隔离通信的端口名称
 const String _isolateName = 'downloader_isolate';
@@ -31,10 +24,10 @@ const String _isolateName = 'downloader_isolate';
 @pragma('vm:entry-point')
 void downloadCallback(String id, int status, int progress) {
   debugPrint('下载回调(后台隔离): taskId=$id, status=$status, progress=$progress');
-  
+
   // 查找主隔离的发送端口
   final SendPort? sendPort = IsolateNameServer.lookupPortByName(_isolateName);
-  
+
   if (sendPort != null) {
     // 发送数据到主隔离
     sendPort.send([id, status, progress]);
@@ -63,137 +56,118 @@ class UpdateChecker extends StatefulWidget {
 }
 
 class _UpdateCheckerState extends State<UpdateChecker> {
-  String taskId = '';
-  int progress = 0;
+  UpdateDownloadState? downloadState;
+  String? taskId;
+  Set<String> activeTaskIds = {};
+  String? filePath;
   DownloadTaskStatus status = DownloadTaskStatus.undefined;
+  int progress = 0;
   String errorMsg = '';
-  StreamSubscription? _progressSub;
-
-  // 接收端口，用于接收后台隔离的消息
+  // ...
   ReceivePort? _port;
-  
+  bool _loading = false;
+
   @override
   void initState() {
     super.initState();
-    
-    // 创建接收端口并注册到隔离名称服务
     _port = ReceivePort();
     IsolateNameServer.registerPortWithName(_port!.sendPort, _isolateName);
-    
-    // 监听接收端口，接收后台隔离发送的下载进度事件
-    _port!.listen((dynamic data) {
-      // 解析数据
+    _port!.listen((dynamic data) async {
       String id = data[0];
       int statusValue = data[1];
       int progressValue = data[2];
-      
-      debugPrint('主隔离收到下载进度: taskId=$id, status=$statusValue, progress=$progressValue');
-      debugPrint('当前taskId: $taskId, 是否匹配: ${id == taskId}');
-      
-      if (id == taskId && mounted) {
-        final newStatus = DownloadTaskStatus.values[statusValue];
-        debugPrint('更新状态: $status -> $newStatus, 进度: $progress -> $progressValue');
-        
+      if (!mounted) return;
+      // 支持多 taskId（resume 后新旧 id 都监听）
+      if (activeTaskIds.isNotEmpty && !activeTaskIds.contains(id)) return;
+      final newStatus = DownloadTaskStatus.values[statusValue];
+      setState(() {
+        status = newStatus;
+        progress = progressValue;
+        // 只要有回调，确保 taskId 与 activeTaskIds同步
+        if (taskId != id) {
+          taskId = id;
+        }
+        activeTaskIds.add(id);
+      });
+      // 进度100且状态为complete时，自动切换为fileReady，刷新按钮为“立即安装”
+      if (progressValue == 100 && newStatus == DownloadTaskStatus.complete) {
+        final path =
+            filePath ??
+            (taskId != null ? await AppUpdateTool.filePathOf(taskId!) : null);
         setState(() {
-          status = newStatus;
-          progress = progressValue;
+          downloadState = UpdateDownloadState.fileReady;
+          filePath = path;
+          status = DownloadTaskStatus.complete;
+          progress = 100;
+          activeTaskIds.clear();
         });
       }
     });
-    
-    // 保留原有的stream监听，以兼容旧代码
-    _progressSub = downloadProgressStream.stream.listen((event) {
-      debugPrint('收到stream事件: taskId=${event.taskId}, status=${event.status}, progress=${event.progress}');
-    });
+    // ...
   }
 
   @override
   void dispose() {
-    // 取消流订阅
-    _progressSub?.cancel();
-    
-    // 关闭接收端口
+    // ...
     _port?.close();
-    
-    // 从隔离名称服务中移除端口映射
     IsolateNameServer.removePortNameMapping(_isolateName);
-    
     super.dispose();
   }
 
   Future<void> onUpdate() async {
-    try {
-      debugPrint('开始下载更新...');
-      
-      // 如果已有失败任务，先清理
-      if (taskId.isNotEmpty && status == DownloadTaskStatus.failed) {
-        debugPrint('清理失败任务: $taskId');
-        await FlutterDownloader.remove(
-          taskId: taskId,
-          shouldDeleteContent: true,
-        );
-      }
-      
-      final id = await AppUpdateTool.download(widget.remote);
-      debugPrint('下载任务创建结果: $id');
-      
-      if (id != null) {
-        setState(() {
-          taskId = id;
-          errorMsg = '';
-          
-          // 如果是已存在的文件，状态设为完成
-          if (id == 'EXISTING_FILE' || id.startsWith('EXISTING_FILE_')) {
-            status = DownloadTaskStatus.complete;
-          }
-          // 如果是新任务，初始状态设为排队中
-          else {
-            status = DownloadTaskStatus.enqueued;
-            progress = 0;
-          }
-        });
-        
-        debugPrint('下载任务状态已更新: taskId=$taskId, status=$status');
-      } else {
-        setState(() {
-          errorMsg = '下载任务创建失败，请检查网络连接和存储权限';
-        });
-      }
-    } catch (e) {
-      debugPrint('下载异常: $e');
-      setState(() {
-        if (e.toString().contains('SocketException')) {
-          errorMsg = '网络连接失败，请检查网络后重试';
-        } else if (e.toString().contains('Permission')) {
-          errorMsg = '权限不足，请授予存储权限后重试';
-        } else {
-          errorMsg = '下载失败: ${e.toString()}';
+    if (_loading) return;
+    _loading = true;
+    setState(() {
+      errorMsg = '';
+      downloadState = null;
+      // 不重置 taskId/progress/status，避免暂停后进度丢失
+    });
+    final result = await AppUpdateTool.download(widget.remote);
+    setState(() {
+      downloadState = result.state;
+      taskId = result.taskId;
+      filePath = result.filePath;
+      errorMsg = result.error ?? '';
+      if (result.state == UpdateDownloadState.downloading &&
+          result.taskId != null) {
+        // resume/新任务都加入监听
+        activeTaskIds.add(result.taskId!);
+        // 只有新任务才重置进度
+        if (taskId != null && taskId != result.taskId) {
+          status = DownloadTaskStatus.enqueued;
+          progress = 0;
         }
-      });
-    }
+      } else if (result.state == UpdateDownloadState.fileReady) {
+        status = DownloadTaskStatus.complete;
+        progress = 100;
+        activeTaskIds.clear();
+      } else if (result.state == UpdateDownloadState.failed) {
+        status = DownloadTaskStatus.failed;
+        taskId = null;
+        filePath = null;
+        activeTaskIds.clear();
+      }
+    });
+    _loading = false;
   }
 
   Future<void> onInstall() async {
+    if (_loading) return;
+    _loading = true;
     try {
-      String? path;
-
-      if (taskId == 'EXISTING_FILE' || taskId.startsWith('EXISTING_FILE_')) {
-        // 文件已存在，直接构建路径
-        final baseDir = (await getExternalStorageDirectory())!.path;
-        final updatesDir = Directory('$baseDir/updates');
-        path = '${updatesDir.path}/faith-${widget.remote.tag}.apk';
-      } else {
-        // 从下载任务获取路径
-        path = await AppUpdateTool.filePathOf(taskId);
-      }
-
+      final path =
+          filePath ??
+          (taskId != null ? await AppUpdateTool.filePathOf(taskId!) : null);
       if (path == null) {
         setState(() {
           errorMsg = '找不到文件';
+          downloadState = UpdateDownloadState.failed;
+          taskId = null;
+          filePath = null;
         });
+        _loading = false;
         return;
       }
-
       final ok = await AppUpdateTool.verifyAndCleanIfInvalid(
         path,
         widget.remote.shaUrl,
@@ -201,17 +175,24 @@ class _UpdateCheckerState extends State<UpdateChecker> {
       if (!ok) {
         setState(() {
           errorMsg = '文件校验失败，已删除';
+          downloadState = UpdateDownloadState.failed;
+          taskId = null;
+          filePath = null;
         });
+        _loading = false;
         return;
       }
       await AppUpdateTool.install(path);
-      // TODO: 安装后暂不自动删除APK，后续可在合适时机清理
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       setState(() {
         errorMsg = e.toString();
+        downloadState = UpdateDownloadState.failed;
+        taskId = null;
+        filePath = null;
       });
     }
+    _loading = false;
   }
 
   void onClose() {
@@ -221,10 +202,10 @@ class _UpdateCheckerState extends State<UpdateChecker> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     // 添加调试信息
     debugPrint('构建UI: taskId=$taskId, status=$status, progress=$progress');
-    
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -304,97 +285,145 @@ class _UpdateCheckerState extends State<UpdateChecker> {
             ),
           ),
         // 下载进度与按钮
-        Builder(builder: (context) {
-          // 添加调试信息
-          debugPrint('构建下载按钮: taskId=$taskId, status=$status, progress=$progress');
-          
-          // 根据不同状态显示不同UI
-          if (taskId.isEmpty) {
-            // 主按钮 - 未开始下载
-            return SizedBox(
-              width: double.infinity,
-              child: FaButton(
-                onPressed: onUpdate,
-                text: '立即更新',
-                size: FaButtonSize.large,
-                borderRadius: 12,
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: Colors.white,
-              ),
-            );
-          } else if (status == DownloadTaskStatus.enqueued || status == DownloadTaskStatus.running) {
-            // 下载中 - 显示进度条
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Column(
-                children: [
-                  LinearProgressIndicator(value: progress / 100),
-                  const SizedBox(height: 6),
-                  Text(
-                    status == DownloadTaskStatus.enqueued
-                        ? '准备下载...'
-                        : '$progress%',
-                    style: const TextStyle(fontSize: 13, color: Colors.black54),
+        Builder(
+          builder: (context) {
+            if (downloadState == null ||
+                downloadState == UpdateDownloadState.failed) {
+              // 未开始或失败
+              return Padding(
+                padding: const EdgeInsets.only(top: 4, bottom: 12),
+                child: FaButton(
+                  onPressed: onUpdate,
+                  text: downloadState == UpdateDownloadState.failed
+                      ? '重试'
+                      : '立即更新',
+                  icon: downloadState == UpdateDownloadState.failed
+                      ? Icon(
+                          Icons.refresh_rounded,
+                          color: theme.colorScheme.primary,
+                          size: 22,
+                        )
+                      : null,
+                  block: true,
+                  size: FaButtonSize.large,
+                  borderRadius: 12,
+                  backgroundColor: downloadState == UpdateDownloadState.failed
+                      ? null
+                      : theme.colorScheme.primary,
+                  foregroundColor: downloadState == UpdateDownloadState.failed
+                      ? null
+                      : Colors.white,
+                  type: downloadState == UpdateDownloadState.failed
+                      ? FaButtonType.outline
+                      : FaButtonType.primary,
+                ),
+              );
+            } else if (downloadState == UpdateDownloadState.downloading) {
+              // 下载中，按钮进度即背景色
+              return Padding(
+                padding: const EdgeInsets.only(top: 4, bottom: 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: ProgressButton(
+                        progress: (progress / 100).clamp(0.0, 1.0),
+                        text: status == DownloadTaskStatus.paused
+                            ? '继续下载 ($progress%)'
+                            : status == DownloadTaskStatus.enqueued
+                            ? '准备下载...'
+                            : '下载中 ($progress%)',
+                        onPressed: status == DownloadTaskStatus.paused
+                            ? () async {
+                                if (taskId != null) {
+                                  final newTaskId =
+                                      await FlutterDownloader.resume(
+                                        taskId: taskId!,
+                                      );
+                                  if (newTaskId != null) {
+                                    setState(() {
+                                      // 新旧 id 都监听
+                                      activeTaskIds.add(newTaskId);
+                                      activeTaskIds.add(taskId!);
+                                      taskId = newTaskId;
+                                    });
+                                  } else {
+                                    // 某些平台 resume 返回 null，继续监听原 id
+                                    setState(() {
+                                      activeTaskIds.add(taskId!);
+                                    });
+                                  }
+                                }
+                              }
+                            : status == DownloadTaskStatus.running ||
+                                  status == DownloadTaskStatus.enqueued
+                            ? () async {
+                                if (taskId != null) {
+                                  await FlutterDownloader.pause(
+                                    taskId: taskId!,
+                                  );
+                                }
+                              }
+                            : null,
+                        enabled:
+                            status == DownloadTaskStatus.paused ||
+                            status == DownloadTaskStatus.running ||
+                            status == DownloadTaskStatus.enqueued,
+                        icon: status == DownloadTaskStatus.paused
+                            ? Icon(
+                                Icons.play_arrow_rounded,
+                                color: Theme.of(context).colorScheme.primary,
+                                size: 22,
+                              )
+                            : Icon(
+                                Icons.pause_rounded,
+                                color: Theme.of(context).colorScheme.primary,
+                                size: 22,
+                              ),
+                        backgroundColor: Colors.transparent,
+                        progressColor: Theme.of(context).colorScheme.primary,
+                        foregroundColor: Theme.of(context).colorScheme.primary,
+                        borderRadius: 12,
+                        height: 48,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            } else if (downloadState == UpdateDownloadState.fileReady) {
+              // 下载完成
+              return Padding(
+                padding: const EdgeInsets.only(top: 4, bottom: 12),
+                child: FaButton(
+                  onPressed: onInstall,
+                  text: '立即安装',
+                  icon: Icon(
+                    Icons.install_mobile_rounded,
+                    color: Colors.white,
+                    size: 22,
                   ),
-                ],
-              ),
-            );
-          } else if (status == DownloadTaskStatus.complete || 
-                     taskId == 'EXISTING_FILE' || 
-                     taskId.startsWith('EXISTING_FILE_')) {
-            // 下载完成 - 显示安装按钮
-            return Padding(
-              padding: const EdgeInsets.only(top: 4, bottom: 12),
-              child: FaButton(
-                onPressed: onInstall,
-                text: taskId == 'EXISTING_FILE' || taskId.startsWith('EXISTING_FILE_')
-                    ? '文件已存在，立即安装'
-                    : '立即安装',
-                icon: Icon(
-                  Icons.install_mobile_rounded,
-                  color: Colors.white,
-                  size: 22,
+                  block: true,
+                  size: FaButtonSize.large,
+                  borderRadius: 12,
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: Colors.white,
                 ),
-                block: true,
-                size: FaButtonSize.large,
-                borderRadius: 12,
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: Colors.white,
-              ),
-            );
-          } else if (status == DownloadTaskStatus.failed || status == DownloadTaskStatus.undefined) {
-            // 下载失败 - 显示重试按钮
-            return Padding(
-              padding: const EdgeInsets.only(top: 4, bottom: 12),
-              child: FaButton(
-                onPressed: onUpdate,
-                text: '重试',
-                icon: Icon(
-                  Icons.refresh_rounded,
-                  color: theme.colorScheme.primary,
-                  size: 22,
+              );
+            } else {
+              // 兜底
+              return SizedBox(
+                width: double.infinity,
+                child: FaButton(
+                  onPressed: onUpdate,
+                  text: '立即更新',
+                  size: FaButtonSize.large,
+                  borderRadius: 12,
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: Colors.white,
                 ),
-                block: true,
-                size: FaButtonSize.large,
-                borderRadius: 12,
-                type: FaButtonType.outline,
-              ),
-            );
-          } else {
-            // 其他状态 - 显示更新按钮
-            return SizedBox(
-              width: double.infinity,
-              child: FaButton(
-                onPressed: onUpdate,
-                text: '立即更新',
-                size: FaButtonSize.large,
-                borderRadius: 12,
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: Colors.white,
-              ),
-            );
-          }
-        }),
+              );
+            }
+          },
+        ),
         // “以后再说”按钮保持灰色、block、间距
         Center(
           child: GestureDetector(
