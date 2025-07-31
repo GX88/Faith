@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
 
+import '../../../comm/ui/drawer/common_drawer.dart';
 import '../../explore/views/index.dart';
 import '../../home/views/index.dart';
 import '../../settings/views/index.dart';
@@ -25,6 +26,9 @@ class BottomNavController extends GetxController {
     selectedIndex.value = index;
   }
 }
+
+/// 全局Scaffold的Key，用于在其他页面中访问侧边栏
+final GlobalKey<ScaffoldState> globalScaffoldKey = GlobalKey<ScaffoldState>();
 
 /// 底部导航栏页面
 class BottomNavigationBarPage extends StatefulWidget {
@@ -166,6 +170,8 @@ class _BottomNavigationBarPageState extends State<BottomNavigationBarPage>
         }
       }
       return Scaffold(
+        key: globalScaffoldKey,
+        drawer: const GlobalDrawer(),
         extendBody: true, // 允许内容延伸到bottomNavigationBar区域
         body: Stack(
           children: [

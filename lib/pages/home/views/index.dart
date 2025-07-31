@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../utils/smart_status_bar.dart';
 import '../controller/home_controller.dart';
+import '../../nav/views/bottom_navigation_bar.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -35,7 +36,22 @@ class _HomePageState extends State<HomePage> with SmartStatusBarMixin {
         backgroundColor: const Color(0xFFE3F2FD), // 淡蓝色，主色调更明显
         extendBodyBehindAppBar: true,
         extendBody: true,
-        appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.menu, color: Colors.black87, size: 28),
+            onPressed: () {
+              // 使用全局Scaffold的Key来打开侧边栏
+              globalScaffoldKey.currentState?.openDrawer();
+            },
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              splashFactory: NoSplash.splashFactory,
+              highlightColor: Colors.transparent,
+            ),
+          ),
+        ),
         body: Stack(
           children: [
             // 背景装饰
