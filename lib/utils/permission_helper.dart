@@ -18,7 +18,6 @@ class PermissionHelper {
   /// 检查「安装未知来源应用」是否已授予
   static bool isInstallGranted(PermissionStatus status) => status.isGranted;
 
-
   /* ---------- 一次性全部扩展权限：应用更新 ---------- */
   /// 同时请求存储 + 安装（更新场景专用）
   static Future<bool> requestAllForUpdate() async {

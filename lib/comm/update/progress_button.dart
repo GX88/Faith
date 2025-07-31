@@ -48,7 +48,7 @@ class ProgressButton extends StatelessWidget {
             widthFactor: progress.clamp(0.0, 1.0),
             child: Container(
               decoration: BoxDecoration(
-                color: progressColor.withOpacity(0.18 + 0.72 * progress),
+                color: progressColor.withValues(alpha: 0.18 + 0.72 * progress),
                 borderRadius: BorderRadius.circular(borderRadius),
               ),
             ),

@@ -16,8 +16,7 @@ class LocalConfig extends Config {
 
   // 开发环境更新APK配置
   @override
-  String get updateApkUrl =>
-      'https://cdn4.cdn-telegram.org/file/Telegram.apk';
+  String get updateApkUrl => 'https://cdn4.cdn-telegram.org/file/Telegram.apk';
   @override
   String get updateApkFileName => 'faith.dev.apk';
 }

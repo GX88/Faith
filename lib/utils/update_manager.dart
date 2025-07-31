@@ -27,7 +27,7 @@ class UpdateManager {
 
     // 检查当前更新状态
     _checkCurrentUpdateStatus();
-    
+
     // 设置监听器（只设置一次）
     _setupUpdateListener();
   }
@@ -44,7 +44,8 @@ class UpdateManager {
 
   /// 检查当前更新状态（处理网络快的情况）
   static void _checkCurrentUpdateStatus() {
-    if (AppUpdateTool.to.hasUpdate.value && !AppStateStore.hasShownUpdateDialog()) {
+    if (AppUpdateTool.to.hasUpdate.value &&
+        !AppStateStore.hasShownUpdateDialog()) {
       _showUpdateView();
     }
   }

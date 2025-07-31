@@ -86,7 +86,7 @@ class FaToast {
     final overlay = Overlay.of(context);
 
     Color themeColor = color ?? _defaultBgColors[type]!;
-    Color iconBg = iconBgColor ?? themeColor.withOpacity(0.15);
+    Color iconBg = iconBgColor ?? themeColor.withValues(alpha: 0.15);
     Widget? resolvedIcon = icon;
     if (resolvedIcon == null && type != FaToastType.custom) {
       resolvedIcon = Container(
@@ -137,7 +137,7 @@ class FaToast {
                     width: 28,
                     height: 28,
                     decoration: BoxDecoration(
-                      color: Colors.grey.withOpacity(0.12),
+                      color: Colors.grey.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -197,14 +197,14 @@ class FaToast {
               glassGradient ??
               LinearGradient(
                 colors: [
-                  Colors.white.withOpacity(glassOpacity + 0.07),
-                  Colors.white.withOpacity(glassOpacity),
+                  Colors.white.withValues(alpha: glassOpacity + 0.07),
+                  Colors.white.withValues(alpha: glassOpacity),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
           border: Border.all(
-            color: borderColor ?? Colors.white.withOpacity(0.22),
+            color: borderColor ?? Colors.white.withValues(alpha: 0.22),
             width: borderWidth,
           ),
           borderRadius: BorderRadius.circular(borderRadius),

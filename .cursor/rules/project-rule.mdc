@@ -2,11 +2,28 @@
 alwaysApply: true
 ---
 
-1. Answer in Chinese-simplified in any case.
-2. Methods that involve the use of any dependencies or libraries need to be queried for their corresponding documents before being used.
-3. In any case, don't get stuck in the problem when you can't fix it successfully after two or three attempts. You need to read the overall project to see if there are any other possible causes; Find the root cause.
-4. When you're implementing something or fixing a problem, don't automatically scale something else. Unless requested by the user, minimal implementation and best practices are required.
-5. Any code generated should be well commented and elegantly formatted
-6. There is no absolutely necessary modification of the content, and it is absolutely not necessary to make modifications.
-7. It's important to do your best to combine all the contexts
-8. Each time you write a terminal command, you need to see what platform it is currently on, for example, if it is Windows, use it; Connect commands; If it is a Mac using &&& Connect.
+1. 请保持对话语言始终为中文
+2. 我的系统是 windows 11
+3. 在生成代码时，要添加当前文件语言对应的函数注释
+4. 生成代码时，如果涉及到三方依赖或者库等，要根据当前的版本号查询对应的文档，确保使用的方法没有过时等
+5. 生成代码时，需要改动原先的代码时，要注意：
+   1. 是否有必要改动原先的代码
+   2. 是否有必要添加新的代码
+   3. 是否有必要删除原先的代码
+6. 生成代码完成后，必须在进行一次代码格式化与阅读，确保没有以下问题，如果有以下问题，需要解决掉才可以完成这次任务：
+   1. 代码是否有警告：
+      1. 是否有未使用的变量
+      2. 是否有未使用的函数
+      3. 是否有未使用的类
+      4. 是否有未使用的库
+   2. 代码是否有错误：
+      1. 是否有语法错误
+      2. 是否有逻辑错误
+      3. 是否有类型错误
+   3. 代码是否有性能问题：
+      1. 是否有重复的代码
+      2. 是否有冗余的代码
+      3. 是否有性能问题
+7. 每次解决问题。不局限于问题本身。需从整体项目的角度来考虑问题，而不是局限于问题的细节。要阅读整体项目或者涉及到错误的地方进行整体排查后解决
+8. 需要根据需求生成代码时，你要先根据项目的整体定位。进行思考这个需求是要做什么。然后再去联网查询相关的资料，再去编码
+9. 在尽全力的情况下，结合所有的上下文的信息。

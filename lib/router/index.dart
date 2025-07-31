@@ -1,5 +1,5 @@
 import 'package:faith/pages/auth/biometric_auth_page.dart';
-import 'package:faith/pages/nav/views/bottom navigation_bar.dart';
+import 'package:faith/pages/nav/views/bottom_navigation_bar.dart';
 import 'package:faith/pages/splash/one_splash.dart';
 import 'package:faith/pages/unknown/index.dart';
 import 'package:flutter/material.dart';

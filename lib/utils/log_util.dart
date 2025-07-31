@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 
 class LogUtil {
   static Future<void> uploadLog({
@@ -22,7 +23,7 @@ class LogUtil {
         options: Options(headers: {'Content-Type': 'application/json'}),
       );
     } catch (e) {
-      print('日志上传失败: $e');
+      debugPrint('日志上传失败: $e');
     }
   }
 }

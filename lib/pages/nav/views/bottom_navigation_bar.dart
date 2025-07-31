@@ -215,7 +215,7 @@ class _BottomNavigationBarPageState extends State<BottomNavigationBarPage>
                 child: Container(
                   height: 60,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.95),
+                    color: Colors.white.withValues(alpha: 0.85),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
