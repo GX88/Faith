@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:faith/comm/update/update_service.dart';
 import 'package:faith/config/config.default.dart';
 import 'package:faith/router/index.dart';
+import 'package:faith/utils/update_utils.dart';
 import 'package:get/get.dart';
 
 /// 启动页跳过控制器
@@ -34,9 +34,6 @@ class SkipController extends GetxController {
   /// 跳转参数
   final Map<String, dynamic>? targetArguments;
 
-  // Future<void>? _updateFuture; // 移除未使用的字段
-  bool _updateFinished = false;
-
   /// 跳转是否已执行，防止重复跳转
   bool _hasSkipped = false;
 
@@ -56,33 +53,20 @@ class SkipController extends GetxController {
   void onInit() {
     super.onInit();
     startCountdown();
+
+    // 使用utils的AppUpdateTool，进行检查更新
+    _checkForUpdates();
+  }
+
+  /// 检查应用更新
+  Future<void> _checkForUpdates() async {
+    await Get.find<AppUpdateTool>().checkUpdate();
   }
 
   @override
   void onClose() {
     _timer?.cancel();
     super.onClose();
-  }
-
-  @override
-  void onReady() {
-    super.onReady();
-    _checkUpdateWithTimeout();
-  }
-
-  void _checkUpdateWithTimeout() {
-    final duration = Duration(seconds: initialCountdown);
-    // 直接 fire-and-forget，不保存 Future
-    Get.find<UpdateService>().init().then((_) {
-      _updateFinished = true;
-    });
-    // 倒计时结束时，若还未完成则取消（实际Dio无法强制cancel，但可忽略结果）
-    Future.delayed(duration, () {
-      if (!_updateFinished) {
-        // 这里可以设置一个标志位，后续请求结果忽略
-        _updateFinished = true;
-      }
-    });
   }
 
   /// 开始倒计时
