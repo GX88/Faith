@@ -40,6 +40,8 @@ class _BiometricAuthPageState extends State<BiometricAuthPage> {
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.dark,
+        systemNavigationBarColor: Colors.white,
+        systemNavigationBarIconBrightness: Brightness.dark,
       ),
     );
   }
@@ -131,6 +133,8 @@ class _BiometricAuthPageState extends State<BiometricAuthPage> {
           systemOverlayStyle: const SystemUiOverlayStyle(
             statusBarColor: Colors.transparent,
             statusBarIconBrightness: Brightness.dark,
+            systemNavigationBarColor: Colors.white,
+            systemNavigationBarIconBrightness: Brightness.dark,
           ),
         ),
         extendBodyBehindAppBar: true, // 允许内容延伸到AppBar下面

@@ -2,12 +2,32 @@ import 'dart:ui';
 
 import 'package:faith/router/index.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import 'controller/skip.dart';
 
-class OneSplash extends StatelessWidget {
+class OneSplash extends StatefulWidget {
   const OneSplash({super.key});
+
+  @override
+  State<OneSplash> createState() => _OneSplashState();
+}
+
+class _OneSplashState extends State<OneSplash> {
+  @override
+  void initState() {
+    super.initState();
+    // 设置启动页面的状态栏样式
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        systemNavigationBarColor: Colors.white,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,9 +38,10 @@ class OneSplash extends StatelessWidget {
         targetRoute: RoutePath.home,
       ),
       builder: (controller) => Scaffold(
-        body: Stack(
-          clipBehavior: Clip.none,
-          children: [
+        body: SafeArea(
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
             // 背景图
             Positioned(
               width: MediaQuery.of(context).size.width * 1.7,
@@ -105,7 +126,7 @@ class OneSplash extends StatelessWidget {
             ),
             // 跳过按钮
             Positioned(
-              top: 60,
+              top: 20,
               right: 24,
               child: Obx(
                 () => controller.showSkip.value
@@ -132,7 +153,8 @@ class OneSplash extends StatelessWidget {
                     : const SizedBox(),
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
 
@@ -51,6 +52,15 @@ class _BottomNavigationBarPageState extends State<BottomNavigationBarPage>
   @override
   void initState() {
     super.initState();
+    // 设置底部导航栏页面的状态栏样式
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+    );
     // 初始化首页tab的Lottie动画控制器
     lottieController = AnimationController(vsync: this);
     // 初始化工具tab的Lottie动画控制器

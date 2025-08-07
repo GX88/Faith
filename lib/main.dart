@@ -97,8 +97,10 @@ class MainAppPage extends StatelessWidget {
             useMaterial3: true, // 使用 Material 3
             appBarTheme: const AppBarTheme(
               systemOverlayStyle: SystemUiOverlayStyle(
-                statusBarColor: Color(0xFFE3F2FD), // 首页默认状态栏颜色
+                statusBarColor: Colors.transparent, // 透明状态栏，让各页面自己控制
                 statusBarIconBrightness: Brightness.dark, // 深色图标
+                systemNavigationBarColor: Colors.transparent, // 默认白色导航栏
+                systemNavigationBarIconBrightness: Brightness.dark, // 深色导航栏图标
               ),
             ),
           ),

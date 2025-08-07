@@ -237,12 +237,14 @@ class GlobalDrawer extends StatelessWidget {
         ),
         // 平面设计，移除卡片样式
         Column(
-          children: items.map((item) => 
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: item,
-            )
-          ).toList(),
+          children: items
+              .map(
+                (item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: item,
+                ),
+              )
+              .toList(),
         ),
       ],
     );
@@ -264,11 +266,7 @@ class GlobalDrawer extends StatelessWidget {
           child: Row(
             children: [
               // 简洁图标，无背景
-              Icon(
-                icon,
-                size: 20,
-                color: const Color.fromRGBO(0, 0, 0, 0.6),
-              ),
+              Icon(icon, size: 20, color: const Color.fromRGBO(0, 0, 0, 0.6)),
               const SizedBox(width: 16),
               // 标题
               Expanded(

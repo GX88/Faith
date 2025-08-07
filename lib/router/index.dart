@@ -2,6 +2,7 @@ import 'package:faith/pages/auth/biometric_auth_page.dart';
 import 'package:faith/pages/nav/views/bottom_navigation_bar.dart';
 import 'package:faith/pages/splash/one_splash.dart';
 import 'package:faith/pages/unknown/index.dart';
+import 'package:faith/pages/2fa/views/index.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -16,6 +17,9 @@ abstract class RoutePath {
 
   // 主页面
   static const String home = '/home';
+
+  // 2FA页面
+  static const String tfa = '/2fa';
 
   // 示例：其他页面路由
   static const String profile = '/profile';
@@ -79,6 +83,14 @@ class AppPages {
         );
       },
       transition: Transition.fadeIn,
+      preventDuplicates: true,
+    ),
+
+    // 2FA页面
+    CustomGetPage(
+      name: RoutePath.tfa,
+      page: () => const TfaPage(),
+      transition: Transition.rightToLeft,
       preventDuplicates: true,
     ),
   ];

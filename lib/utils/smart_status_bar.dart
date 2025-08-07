@@ -159,6 +159,8 @@ class SmartStatusBar {
       SystemUiOverlayStyle(
         statusBarColor: Colors.transparent, // 保持透明，让页面颜色透过
         statusBarIconBrightness: iconBrightness,
+        systemNavigationBarColor: color, // 设置导航栏颜色与页面背景一致
+        systemNavigationBarIconBrightness: iconBrightness, // 导航栏图标亮度与状态栏一致
       ),
     );
 
@@ -189,6 +191,8 @@ class SmartStatusBar {
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.dark, // 默认深色图标
+        systemNavigationBarColor: Colors.white, // 默认白色导航栏
+        systemNavigationBarIconBrightness: Brightness.dark, // 默认深色导航栏图标
       ),
     );
     debugPrint('SmartStatusBar: 使用默认状态栏设置');

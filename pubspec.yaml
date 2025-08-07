@@ -1,6 +1,6 @@
 name: faith
 description: "A new Flutter project."
-version: 1.0.3+1
+version: 1.0.4+1
 
 environment:
   sdk: ^3.8.1
@@ -44,6 +44,10 @@ dependencies:
   open_filex: ^4.6.0 # 安装应用
 
   crypto: ^3.0.6 # 加密
+
+  mobile_scanner: ^5.2.3 # 二维码扫描
+  otp: ^3.1.4 # TOTP生成
+  qr_flutter: ^4.1.0 # 二维码生成
 
 dev_dependencies:
   flutter_test:
