@@ -11,6 +11,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart' as shad;
 
 Future<void> main() async {
   await _initializeApp();
@@ -81,38 +82,41 @@ class MainAppPage extends StatelessWidget {
           color: Colors.blue,
           backgroundColor: Colors.transparent,
         ),
-        child: GetMaterialApp(
-          debugShowCheckedModeBanner: false, // 隐藏调试标志
-          title: Config.instance.appName,
-          initialRoute: AppPages.initial,
-          getPages: AppPages.pages,
-          unknownRoute: AppPages.unknownRoute,
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF000000), // 使用黑色作为主色调
-              primary: const Color(0xFF000000),
-              secondary: const Color(0xFF666666),
-              error: const Color(0xFFDC3545),
-            ),
-            useMaterial3: true, // 使用 Material 3
-            appBarTheme: const AppBarTheme(
-              systemOverlayStyle: SystemUiOverlayStyle(
-                statusBarColor: Colors.transparent, // 透明状态栏，让各页面自己控制
-                statusBarIconBrightness: Brightness.dark, // 深色图标
-                systemNavigationBarColor: Colors.transparent, // 默认白色导航栏
-                systemNavigationBarIconBrightness: Brightness.dark, // 深色导航栏图标
+        child: shad.Theme(
+          data: shad.ThemeData(),
+          child: GetMaterialApp(
+            debugShowCheckedModeBanner: false, // 隐藏调试标志
+            title: Config.instance.appName,
+            initialRoute: AppPages.initial,
+            getPages: AppPages.pages,
+            unknownRoute: AppPages.unknownRoute,
+            theme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: const Color(0xFF000000), // 使用黑色作为主色调
+                primary: const Color(0xFF000000),
+                secondary: const Color(0xFF666666),
+                error: const Color(0xFFDC3545),
+              ),
+              useMaterial3: true, // 使用 Material 3
+              appBarTheme: const AppBarTheme(
+                systemOverlayStyle: SystemUiOverlayStyle(
+                  statusBarColor: Colors.transparent, // 透明状态栏，让各页面自己控制
+                  statusBarIconBrightness: Brightness.dark, // 深色图标
+                  systemNavigationBarColor: Colors.transparent, // 默认白色导航栏
+                  systemNavigationBarIconBrightness: Brightness.dark, // 深色导航栏图标
+                ),
               ),
             ),
+            builder: (context, child) {
+              return Stack(
+                children: [
+                  child!,
+                  if (context.isDarkMode)
+                    IgnorePointer(child: Container(color: Colors.black12)),
+                ],
+              );
+            },
           ),
-          builder: (context, child) {
-            return Stack(
-              children: [
-                child!,
-                if (context.isDarkMode)
-                  IgnorePointer(child: Container(color: Colors.black12)),
-              ],
-            );
-          },
         ),
       ),
     );

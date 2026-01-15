@@ -49,6 +49,8 @@ dependencies:
   otp: ^3.1.4 # TOTP生成
   qr_flutter: ^4.1.0 # 二维码生成
 
+  shadcn_flutter: ^0.0.47 # UI组件库
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
